@@ -19,7 +19,7 @@ const magicPack = {name:"magic", pack:[bigMagic, smallMagic, smallMagic, blueRup
 const bombPack = {name:"bombs", pack:[oneBomb, oneBomb, oneBomb, fourBombs, oneBomb, oneBomb, eightBombs, oneBomb], index:0};
 const arrowPack = {name:"arrows", pack:[fiveArrows, heart, fiveArrows, tenArrows, fiveArrows, heart, fiveArrows, tenArrows], index:0};
 const varietyPackOne = {name:"var 1", pack:[smallMagic, greenRupee, heart, fiveArrows, smallMagic, oneBomb, greenRupee, heart], index:0};
-const varietyPackTwo = {name:"var 2", pack:[heart, fairy, bigMagic, redRupee, oneBomb, heart, redRupee, tenArrows], index:0};
+const varietyPackTwo = {name:"var 2", pack:[heart, fairy, bigMagic, redRupee, eightBombs, heart, redRupee, tenArrows], index:0};
 
 // TODO CSS nonsense
 function createPackTable(prizePack){
