@@ -1,27 +1,38 @@
-// We want an array of objects
-// each object is an element in the prize pack array
-// it will contain the name (e.g. "heart") and a link to the sprite image
-
 // drops
 const heart = {name:"heart", img:"assets/Heart.png"};
-const greenRupee = {name:"rupee", img:"assets/Green_Rupee.png"};
+const fairy = {name:"fairy", img:"assets/Fairy.png"};
+const greenRupee = {name:"green rupee", img:"assets/Green_Rupee.png"};
+const blueRupee = {name:"blue rupee", img:"assets/Blue_Rupee.png"};
+const redRupee = {name:"red rupee", img:"assets/Red_Rupee.png"};
+const smallMagic = {name:"small magic decanter", img:"assets/Small_Magic.png"};
+const bigMagic = {name:"big magic decanter", img:"assets/Big_Magic.png"};
+const fiveArrows = {name:"5 arrows", img:"assets/5_Arrows.png"};
+const tenArrows = {name:"10 arrows", img:"assets/10_Arrows.png"};
+const oneBomb = {name:"1 bomb", img:"assets/1_Bomb.png"};
+const fourBombs = {name:"4 bombs", img: "assets/4_Bombs.png"};
+const eightBombs = {name:"8 bombs", img: "assets/8_Bombs.png"};
 
 // prize packs
-const heartPack = {name: "hearts", pack:[heart, heart, heart, heart, greenRupee, heart, heart, greenRupee], index:0};
+const heartPack = {name:"hearts", pack:[heart, heart, heart, heart, greenRupee, heart, heart, greenRupee], index:0};
+const rupeePack = {name:"rupees", pack:[blueRupee, greenRupee, blueRupee, redRupee, blueRupee, greenRupee, blueRupee, blueRupee], index:0};
+const magicPack = {name:"magic", pack:[bigMagic, smallMagic, smallMagic, blueRupee, bigMagic, smallMagic, heart, smallMagic], index:0};
+const bombPack = {name:"bombs", pack:[oneBomb, oneBomb, oneBomb, fourBombs, oneBomb, oneBomb, eightBombs, oneBomb], index:0};
+const arrowPack = {name:"arrows", pack:[fiveArrows, heart, fiveArrows, tenArrows, fiveArrows, heart, fiveArrows, tenArrows], index:0};
+const varietyPackOne = {name:"var 1", pack:[smallMagic, greenRupee, heart, fiveArrows, smallMagic, oneBomb, greenRupee, heart], index:0};
+const varietyPackTwo = {name:"var 2", pack:[heart, fairy, bigMagic, redRupee, oneBomb, heart, redRupee, tenArrows], index:0};
 
 // TODO CSS nonsense
 function createPackTable(prizePack){
     const packTableRow = document.createElement("tr");
 
     for (let i = 0; i < prizePack.pack.length; i++){
-        // TODO somewhere in here make an onclick function to update heartPackIndex (but generalized)
         const cell = document.createElement("td");
         const cellImg = document.createElement("img");
         cellImg.setAttribute("src", prizePack.pack[i].img);
         cellImg.setAttribute("alt", prizePack.pack[i].name);
         cell.appendChild(cellImg);
         cell.onclick = function() {
-            updatePackTable(heartPack, i);
+            updatePackTable(prizePack, i);
         };
         packTableRow.appendChild(cell);
     }
@@ -52,9 +63,20 @@ function updatePackTable(pack, index){
 
 function resetTables(){
     updatePackTable(heartPack, 0);
-    // TODO other pack tables
+    updatePackTable(rupeePack, 0);
+    updatePackTable(magicPack, 0);
+    updatePackTable(bombPack, 0);
+    updatePackTable(arrowPack, 0);
+    updatePackTable(varietyPackOne, 0);
+    updatePackTable(varietyPackTwo, 0);
 }
 
 document.addEventListener("DOMContentLoaded", function() {
     createPackTable(heartPack);
+    createPackTable(rupeePack);
+    createPackTable(magicPack);
+    createPackTable(bombPack);
+    createPackTable(arrowPack);
+    createPackTable(varietyPackOne);
+    createPackTable(varietyPackTwo);
 });
