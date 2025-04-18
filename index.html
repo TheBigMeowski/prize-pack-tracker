@@ -4,41 +4,45 @@
         <title>ALTTP Prize Pack Tracker by Meowski</title>
         <!-- TODO put css etc in here -->
         <script src="prizepacks.js"></script>
+        <link rel="stylesheet" href="prizepacks.css">
     </head>
     <body>
         <h1>ALTTP Prize Pack Tracker by Meowski</h1>
-        <p1>
-            <table id="hearts"></table>
-            <button onclick="incrementPackTable(heartPack)">&gt;</button>
-        </p1>
-        <p2>
-            <table id="rupees"></table>
-            <button onclick="incrementPackTable(rupeePack)">&gt;</button>
-        </p2>
-        <p3>
-            <table id="magic"></table>
-            <button onclick="incrementPackTable(magicPack)">&gt;</button>
-        </p3>
-        <p4>
-            <table id="bombs"></table>
-            <button onclick="incrementPackTable(bombPack)">&gt;</button>
-        </p4>
-        <p5>
-            <table id="arrows"></table>
-            <button onclick="incrementPackTable(arrowPack)">&gt;</button>
-        <p6>
-            <table id="var 1"></table>
-            <button onclick="incrementPackTable(varietyPackOne)">&gt;</button>
-        </p6>
-        <p7>
-            <table id="var 2"></table>
-            <button onclick="incrementPackTable(varietyPackTwo)">&gt;</button>
-        </p7>
-        <p8>
+        <div class="packGroups">
+            <div class="packGroup">
+                <table id="hearts"></table>
+                <button onclick="incrementPackTable(heartPack)">&rarr;</button>
+            </div>
+            <div class="packGroup">
+                <table id="rupees"></table>
+                <button onclick="incrementPackTable(rupeePack)">&rarr;</button>
+            </div>
+            <div class="packGroup">
+                <table id="magic"></table>
+                <button onclick="incrementPackTable(magicPack)">&rarr;</button>
+            </div>
+            <div class="packGroup">
+                <table id="bombs"></table>
+                <button onclick="incrementPackTable(bombPack)">&rarr;</button>
+            </div>
+            <div class="packGroup">
+                <table id="arrows"></table>
+                <button onclick="incrementPackTable(arrowPack)">&rarr;</button>
+            </div>
+            <div class="packGroup">
+                <table id="var 1"></table>
+                <button onclick="incrementPackTable(varietyPackOne)">&rarr;</button>
+            </div>
+            <div class="packGroup">
+                <table id="var 2"></table>
+                <button onclick="incrementPackTable(varietyPackTwo)">&rarr;</button>
+            </div>
+        </div>
+        <div>
             <button onclick="resetTables()">reset</button>
-        </p8>
-        <p9>
+        </div>
+        <div>
             <a href="https://alttp-wiki.net/index.php/Enemy_prize_packs">More information on prize packs</a>
-        </p9>
+        </div>
     </body>
 </html>

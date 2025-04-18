@@ -1,0 +1,8 @@
+.packGroups{
+    display:flex;
+    flex-direction:column;
+}
+
+.packGroup{
+    display:flex;
+}
