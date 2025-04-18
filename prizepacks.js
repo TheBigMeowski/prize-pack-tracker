@@ -38,7 +38,7 @@ function createPackTable(prizePack){
     }
     let packTable = document.getElementById(prizePack.name);
     packTable.appendChild(packTableRow);
-    packTable.rows[0].cells[0].style.border = "5px solid red";
+    packTable.rows[0].cells[0].style.border = "3px solid red";
 }
 
 function incrementPackTable(pack){
@@ -58,7 +58,7 @@ function decrementPackTable(pack){
 function updatePackTable(pack, index){
     document.getElementById(pack.name).rows[0].cells[pack.index].style.border = "none";
     pack.index = index;
-    document.getElementById(pack.name).rows[0].cells[pack.index].style.border = "5px solid red";
+    document.getElementById(pack.name).rows[0].cells[pack.index].style.border = "3px solid red";
 }
 
 function resetTables(){
