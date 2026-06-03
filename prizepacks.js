@@ -288,7 +288,8 @@ function createPackTable(prizePack){
         cellImg.setAttribute("alt", prizePack.pack[i].name);
 
         cell.appendChild(cellImg);
-        cell.addEventListener("click", () => {
+        cell.addEventListener("click", (event) => {
+            event.stopPropagation();
             selectPrizePack(prizePacks.indexOf(prizePack));
             updatePackTable(prizePack, i);
         });
@@ -326,6 +327,33 @@ function incrementPackTable(pack){
     if (pack.index >= pack.pack.length - 1) newIndex = 0;
     else newIndex = pack.index + 1;
     updatePackTable(pack, newIndex);
+}
+
+function incrementPackFromButton(pack){
+    selectPrizePack(prizePacks.indexOf(pack));
+    incrementPackTable(pack);
+}
+
+function bindIncrementButton(button, pack){
+    button.addEventListener("pointerup", (event) => {
+        if (event.pointerType !== "touch") return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        button.dataset.suppressClickUntil = String(Date.now() + 450);
+        incrementPackFromButton(pack);
+    });
+
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        if (Date.now() < Number(button.dataset.suppressClickUntil || 0)) {
+            event.preventDefault();
+            return;
+        }
+
+        incrementPackFromButton(pack);
+    });
 }
 
 function decrementPackTable(pack){
@@ -691,10 +719,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         const packGroup = document.querySelector(`[data-pack-id="${pack.id}"]`);
         const incrementButton = packGroup.querySelector('[data-action="increment"]');
-        incrementButton.addEventListener("click", () => {
-            selectPrizePack(prizePacks.indexOf(pack));
-            incrementPackTable(pack);
-        });
+        bindIncrementButton(incrementButton, pack);
         packGroup.addEventListener("click", () => selectPrizePack(prizePacks.indexOf(pack)));
         packGroup.appendChild(createEnemyPanel(pack));
     });
