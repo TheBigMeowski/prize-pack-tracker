@@ -84,6 +84,49 @@ body {
     font-size: 0.95rem;
 }
 
+.creatorCredit {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 24px;
+}
+
+.creatorLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.creatorLink:hover {
+    text-decoration: none;
+}
+
+.creatorBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    margin-right: 7px;
+}
+
+.creatorBadgeIcon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.creatorName {
+    display: inline-block;
+    color: #c279e5;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
 .packGroups {
     flex: 1 1 auto;
     min-height: 0;
