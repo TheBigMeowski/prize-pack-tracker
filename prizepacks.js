@@ -129,9 +129,149 @@ const prizePacks = [
     varietyPackTwo,
 ];
 
+const coreKeyBindings = [
+    {id:"selectPrevious", action:"Select Previous Prize Pack", key:"ArrowUp", label:"Up Arrow"},
+    {id:"selectNext", action:"Select Next Prize Pack", key:"ArrowDown", label:"Down Arrow"},
+    {id:"incrementCounter", action:"Increment Prize Pack Counter", key:"ArrowRight", label:"Right Arrow"},
+    {id:"decrementCounter", action:"Decrement Prize Pack Counter", key:"ArrowLeft", label:"Left Arrow"},
+];
+
+const utilityKeyBindings = [
+    {id:"resetTracker", action:"Reset", key:null, label:"None"},
+    {id:"toggleEnemies", action:"Show Enemies", key:null, label:"None"},
+];
+
+const defaultBindings = new Map();
+
+const selectPackBindings = prizePacks.map((pack, index) => ({
+    id:`selectPack${index + 1}`,
+    action:`Select Prize Pack ${index + 1} (${formatPackName(pack.label)})`,
+    key:String(index + 1),
+    label:String(index + 1),
+    packIndex:index,
+    behavior:"select",
+}));
+
+const selectAndIncrementPackBindings = prizePacks.map((pack, index) => ({
+    id:`selectIncrementPack${index + 1}`,
+    action:`Increment Prize Pack ${index + 1} (${formatPackName(pack.label)})`,
+    key:String(index + 1),
+    label:String(index + 1),
+    packIndex:index,
+    behavior:"selectAndIncrement",
+}));
+
+const eitherIncrementDefaults = ["q", "w", "e", "r", "t", "y", "u"];
+const eitherIncrementPackBindings = prizePacks.map((pack, index) => ({
+    id:`eitherIncrementPack${index + 1}`,
+    action:`Increment Prize Pack ${index + 1} (${formatPackName(pack.label)})`,
+    key:eitherIncrementDefaults[index],
+    label:eitherIncrementDefaults[index].toUpperCase(),
+    packIndex:index,
+    behavior:"selectAndIncrement",
+}));
+
+[
+    ...coreKeyBindings,
+    ...utilityKeyBindings,
+    ...selectPackBindings,
+    ...selectAndIncrementPackBindings,
+    ...eitherIncrementPackBindings,
+].forEach((binding) => {
+    defaultBindings.set(binding.id, {key:binding.key, label:binding.label});
+});
+
+const selectionModes = {
+    selectAndIncrement: {
+        label:"Increment",
+        bindings:selectAndIncrementPackBindings,
+    },
+    select: {
+        label:"Select",
+        bindings:selectPackBindings,
+    },
+    either: {
+        label:"Either",
+        bindings:[
+            ...selectPackBindings,
+            ...eitherIncrementPackBindings,
+        ],
+    },
+};
+
+let selectionMode = "selectAndIncrement";
+
+function getActiveKeyBindings(){
+    return [
+        ...coreKeyBindings,
+        ...utilityKeyBindings,
+        ...selectionModes[selectionMode].bindings,
+    ];
+}
+
+function getEitherBindingById(bindingId){
+    return selectionModes.either.bindings.find((binding) => binding.id === bindingId);
+}
+
+function syncSharedPackBinding(binding){
+    if (binding.id.startsWith("selectPack")) {
+        const eitherBinding = getEitherBindingById(binding.id);
+        if (eitherBinding) {
+            eitherBinding.key = binding.key;
+            eitherBinding.label = binding.label;
+        }
+        return;
+    }
+
+    if (binding.id.startsWith("selectIncrementPack")) {
+        const packNumber = binding.id.replace("selectIncrementPack", "");
+        const eitherBinding = getEitherBindingById(`eitherIncrementPack${packNumber}`);
+        if (eitherBinding && selectionMode !== "either") {
+            eitherBinding.key = binding.key;
+            eitherBinding.label = binding.label;
+        }
+    }
+}
+
+function setSelectionMode(nextMode){
+    selectionMode = nextMode;
+    pendingRebindId = null;
+    renderControlsMenu();
+}
+
+function resetControlsToDefault(){
+    [
+        ...coreKeyBindings,
+        ...utilityKeyBindings,
+        ...selectPackBindings,
+        ...selectAndIncrementPackBindings,
+        ...eitherIncrementPackBindings,
+    ].forEach((binding) => {
+        const defaults = defaultBindings.get(binding.id);
+        binding.key = defaults.key;
+        binding.label = defaults.label;
+    });
+
+    selectionMode = "selectAndIncrement";
+    pendingRebindId = null;
+    renderControlsMenu();
+}
+
+let selectedPrizePackIndex = 0;
+let showSelectedPrizePack = false;
+let pendingRebindId = null;
+let controlsCloseTimer = null;
+
 prizePacks.forEach((pack) => {
     pack.enemies = enemyPrizePacks[pack.id];
 });
+
+function formatPackName(label){
+    return label
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+}
 
 function createPackTable(prizePack){
     const packTableRow = document.createElement("tr");
@@ -148,7 +288,10 @@ function createPackTable(prizePack){
         cellImg.setAttribute("alt", prizePack.pack[i].name);
 
         cell.appendChild(cellImg);
-        cell.addEventListener("click", () => updatePackTable(prizePack, i));
+        cell.addEventListener("click", () => {
+            selectPrizePack(prizePacks.indexOf(prizePack));
+            updatePackTable(prizePack, i);
+        });
         cell.addEventListener("keydown", (event) => {
             if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
@@ -199,6 +342,29 @@ function updatePackTable(pack, index){
     packTable.rows[0].cells[pack.index].classList.add("isCurrent");
 }
 
+function revealSelectedPrizePack(){
+    showSelectedPrizePack = true;
+    document.querySelector(`[data-pack-id="${getSelectedPrizePack().id}"]`)?.classList.add("isSelected");
+}
+
+function selectPrizePack(index, shouldShowSelection = showSelectedPrizePack){
+    const normalizedIndex = (index + prizePacks.length) % prizePacks.length;
+    const previousPack = prizePacks[selectedPrizePackIndex];
+    const nextPack = prizePacks[normalizedIndex];
+
+    document.querySelector(`[data-pack-id="${previousPack.id}"]`)?.classList.remove("isSelected");
+    selectedPrizePackIndex = normalizedIndex;
+
+    if (shouldShowSelection) {
+        showSelectedPrizePack = true;
+        document.querySelector(`[data-pack-id="${nextPack.id}"]`)?.classList.add("isSelected");
+    }
+}
+
+function getSelectedPrizePack(){
+    return prizePacks[selectedPrizePackIndex];
+}
+
 function resetTables(){
     prizePacks.forEach((pack) => updatePackTable(pack, 0));
 }
@@ -208,8 +374,12 @@ function setEnemyPanelsVisible(shouldShowEnemies){
     app.classList.toggle("showEnemies", shouldShowEnemies);
 
     const toggleButton = document.getElementById("toggleEnemiesButton");
-    toggleButton.textContent = shouldShowEnemies ? "Hide enemies" : "Show enemies";
+    toggleButton.textContent = shouldShowEnemies ? "Hide Enemies" : "Show Enemies";
     toggleButton.setAttribute("aria-pressed", shouldShowEnemies.toString());
+
+    if (app.classList.contains("showControls")) {
+        renderControlsMenu();
+    }
 }
 
 function toggleEnemyPanels(){
@@ -217,15 +387,288 @@ function toggleEnemyPanels(){
     setEnemyPanelsVisible(shouldShowEnemies);
 }
 
+function renderControlsMenu(){
+    const controlsList = document.getElementById("controlsList");
+    controlsList.replaceChildren();
+
+    getActiveKeyBindings().forEach((binding) => {
+        const action = document.createElement("div");
+        action.className = "controlAction";
+        action.textContent = getBindingActionLabel(binding);
+
+        const key = document.createElement("button");
+        key.type = "button";
+        key.className = "controlBind";
+        key.dataset.bindingId = binding.id;
+        key.textContent = pendingRebindId === binding.id ? "Press key" : binding.label;
+        key.setAttribute("aria-label", `Rebind ${binding.action}`);
+        key.setAttribute("aria-pressed", (pendingRebindId === binding.id).toString());
+        key.addEventListener("click", () => startRebind(binding.id));
+
+        controlsList.append(action, key);
+
+        if (binding.id === "toggleEnemies") {
+            controlsList.append(createSelectionModeLabel(), createSelectionModeSelect());
+        }
+    });
+
+    controlsList.append(createResetControlsButton());
+}
+
+function getBindingActionLabel(binding){
+    if (binding.id === "toggleEnemies") {
+        return document.querySelector(".app").classList.contains("showEnemies") ? "Hide Enemies" : "Show Enemies";
+    }
+
+    return binding.action;
+}
+
+function createSelectionModeLabel(){
+    const label = document.createElement("div");
+    label.className = "controlAction controlActionWithTooltip";
+    label.tabIndex = 0;
+
+    const labelText = document.createElement("span");
+    labelText.textContent = "Targeted Selection Behavior";
+
+    const indicator = document.createElement("span");
+    indicator.className = "controlTooltipIndicator";
+    indicator.textContent = "?";
+    indicator.setAttribute("aria-hidden", "true");
+
+    const tooltip = createSelectionModeTooltip();
+
+    label.append(labelText, indicator, tooltip);
+    return label;
+}
+
+function createResetControlsButton(){
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "resetControlsButton";
+    button.textContent = "Reset Controls to Default";
+    button.addEventListener("click", resetControlsToDefault);
+    return button;
+}
+
+function createSelectionModeTooltip(){
+    const tooltip = document.createElement("div");
+    tooltip.className = "controlTooltip";
+    tooltip.setAttribute("role", "tooltip");
+
+    tooltip.append(
+        createTooltipLine("Increment", `pressing ${getTooltipKey("selectIncrementPack1")} selects and increments the Hearts pack`),
+        createTooltipLine("Select", `pressing ${getTooltipKey("selectPack1")} selects the Hearts pack`),
+        createTooltipLine("Either", `pressing ${getTooltipKey("selectPack1")} selects the Hearts pack, while pressing ${getTooltipKey("eitherIncrementPack1")} selects and increments the Hearts pack`),
+    );
+
+    return tooltip;
+}
+
+function createTooltipLine(mode, copy){
+    const line = document.createElement("p");
+    const modeName = document.createElement("strong");
+    modeName.textContent = mode;
+    line.append(modeName, `: ${copy}`);
+    return line;
+}
+
+function getTooltipKey(bindingId){
+    const binding = [
+        ...selectPackBindings,
+        ...selectAndIncrementPackBindings,
+        ...eitherIncrementPackBindings,
+    ].find((candidate) => candidate.id === bindingId);
+
+    return binding?.label || "None";
+}
+
+function createSelectionModeSelect(){
+    const select = document.createElement("select");
+    select.id = "selectionModeSelect";
+    select.className = "controlSelect";
+
+    Object.entries(selectionModes).forEach(([mode, config]) => {
+        const option = document.createElement("option");
+        option.value = mode;
+        option.textContent = config.label;
+        option.selected = mode === selectionMode;
+        select.appendChild(option);
+    });
+
+    select.addEventListener("change", (event) => setSelectionMode(event.target.value));
+    return select;
+}
+
+function startRebind(bindingId){
+    pendingRebindId = pendingRebindId === bindingId ? null : bindingId;
+    renderControlsMenu();
+}
+
+function normalizeKeyLabel(key){
+    const labels = {
+        ArrowUp:"Up Arrow",
+        ArrowDown:"Down Arrow",
+        ArrowRight:"Right Arrow",
+        ArrowLeft:"Left Arrow",
+        " ":"Space",
+    };
+
+    return labels[key] || (key.length === 1 ? key.toUpperCase() : key);
+}
+
+function rebindControl(event){
+    if (!pendingRebindId) return false;
+
+    if (event.key === "Escape") {
+        const currentBinding = getActiveKeyBindings().find((binding) => binding.id === pendingRebindId);
+        currentBinding.key = null;
+        currentBinding.label = "None";
+        syncSharedPackBinding(currentBinding);
+        pendingRebindId = null;
+        renderControlsMenu();
+        return true;
+    }
+
+    const reservedKeys = ["Alt", "Control", "Meta", "Shift", "Tab"];
+    if (reservedKeys.includes(event.key)) return true;
+
+    const activeBindings = getActiveKeyBindings();
+    const currentBinding = activeBindings.find((binding) => binding.id === pendingRebindId);
+    const conflictingBinding = activeBindings.find((binding) => binding.key && binding.key === event.key && binding.id !== pendingRebindId);
+    const previousKey = currentBinding.key;
+    const previousLabel = currentBinding.label;
+
+    currentBinding.key = event.key;
+    currentBinding.label = normalizeKeyLabel(event.key);
+
+    if (conflictingBinding) {
+        conflictingBinding.key = previousKey;
+        conflictingBinding.label = previousLabel;
+        syncSharedPackBinding(conflictingBinding);
+    }
+
+    syncSharedPackBinding(currentBinding);
+    pendingRebindId = null;
+    renderControlsMenu();
+    return true;
+}
+
+function setControlsVisible(shouldShowControls){
+    const app = document.querySelector(".app");
+    const controlsPanel = document.getElementById("controlsPanel");
+    const controlsButton = document.getElementById("controlsButton");
+    const packGroups = document.querySelector(".packGroups");
+
+    window.clearTimeout(controlsCloseTimer);
+    app.classList.toggle("showControls", shouldShowControls);
+    packGroups.inert = shouldShowControls;
+    packGroups.setAttribute("aria-hidden", shouldShowControls.toString());
+    controlsButton.textContent = shouldShowControls ? "Hide Controls" : "Show Controls";
+    controlsButton.setAttribute("aria-pressed", shouldShowControls.toString());
+
+    if (shouldShowControls) {
+        controlsPanel.classList.remove("isClosing");
+        controlsPanel.setAttribute("aria-hidden", "false");
+        window.requestAnimationFrame(() => {
+            controlsPanel.classList.add("isOpen");
+        });
+        return;
+    }
+
+    if (!shouldShowControls) {
+        controlsPanel.classList.remove("isOpen");
+        controlsPanel.classList.add("isClosing");
+        pendingRebindId = null;
+        renderControlsMenu();
+        controlsCloseTimer = window.setTimeout(() => {
+            controlsPanel.setAttribute("aria-hidden", "true");
+            controlsPanel.classList.remove("isClosing");
+        }, 200);
+    }
+}
+
+function toggleControls(){
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+    setControlsVisible(!document.querySelector(".app").classList.contains("showControls"));
+}
+
+function handleKeyboardControls(event){
+    const activeBindings = getActiveKeyBindings();
+
+    if (rebindControl(event)) {
+        event.preventDefault();
+        return;
+    }
+
+    if (document.querySelector(".app").classList.contains("showControls")) {
+        if (activeBindings.some((binding) => binding.key && binding.key === event.key)) event.preventDefault();
+        return;
+    }
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+
+    const packBinding = activeBindings.find((binding) => binding.key && binding.key === event.key && binding.packIndex !== undefined);
+    if (packBinding) {
+        event.preventDefault();
+        selectPrizePack(packBinding.packIndex, true);
+        if (packBinding.behavior === "selectAndIncrement") {
+            incrementPackTable(getSelectedPrizePack());
+        }
+        return;
+    }
+
+    if (event.key === activeBindings.find((binding) => binding.id === "selectPrevious").key) {
+        event.preventDefault();
+        selectPrizePack(selectedPrizePackIndex - 1, true);
+        return;
+    }
+
+    if (event.key === activeBindings.find((binding) => binding.id === "selectNext").key) {
+        event.preventDefault();
+        selectPrizePack(selectedPrizePackIndex + 1, true);
+        return;
+    }
+
+    if (event.key === activeBindings.find((binding) => binding.id === "incrementCounter").key) {
+        event.preventDefault();
+        revealSelectedPrizePack();
+        incrementPackTable(getSelectedPrizePack());
+        return;
+    }
+
+    if (event.key === activeBindings.find((binding) => binding.id === "decrementCounter").key) {
+        event.preventDefault();
+        revealSelectedPrizePack();
+        decrementPackTable(getSelectedPrizePack());
+        return;
+    }
+
+    if (event.key === activeBindings.find((binding) => binding.id === "resetTracker").key) {
+        event.preventDefault();
+        resetTables();
+        return;
+    }
+
+    if (event.key === activeBindings.find((binding) => binding.id === "toggleEnemies").key) {
+        event.preventDefault();
+        toggleEnemyPanels();
+    }
+}
+
 function syncMobileEnemyState(){
     const mobilePortrait = window.matchMedia("(pointer: coarse) and (orientation: portrait)").matches;
     const mobileLandscape = window.matchMedia("(pointer: coarse) and (orientation: landscape)").matches;
+    const mobileControlsHidden = window.matchMedia("(pointer: coarse)").matches;
     const toggleButton = document.getElementById("toggleEnemiesButton");
+
+    if (mobileControlsHidden && document.querySelector(".app").classList.contains("showControls")) {
+        setControlsVisible(false);
+    }
 
     if (mobilePortrait) {
         setEnemyPanelsVisible(false);
         toggleButton.disabled = true;
-        toggleButton.innerHTML = "Enemies hidden<br>in portrait mode";
+        toggleButton.innerHTML = "Enemies Hidden<br>in Portrait Mode";
         toggleButton.setAttribute("aria-pressed", "false");
         return;
     }
@@ -233,7 +676,7 @@ function syncMobileEnemyState(){
     if (mobileLandscape) {
         setEnemyPanelsVisible(true);
         toggleButton.disabled = true;
-        toggleButton.innerHTML = "Enemies shown<br>in landscape mode";
+        toggleButton.innerHTML = "Enemies Shown<br>in Landscape Mode";
         toggleButton.setAttribute("aria-pressed", "true");
         return;
     }
@@ -248,12 +691,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
         const packGroup = document.querySelector(`[data-pack-id="${pack.id}"]`);
         const incrementButton = packGroup.querySelector('[data-action="increment"]');
-        incrementButton.addEventListener("click", () => incrementPackTable(pack));
+        incrementButton.addEventListener("click", () => {
+            selectPrizePack(prizePacks.indexOf(pack));
+            incrementPackTable(pack);
+        });
+        packGroup.addEventListener("click", () => selectPrizePack(prizePacks.indexOf(pack)));
         packGroup.appendChild(createEnemyPanel(pack));
     });
 
+    renderControlsMenu();
     document.getElementById("resetButton").addEventListener("click", resetTables);
     document.getElementById("toggleEnemiesButton").addEventListener("click", toggleEnemyPanels);
+    document.getElementById("controlsButton").addEventListener("click", toggleControls);
+    document.addEventListener("keydown", handleKeyboardControls);
     syncMobileEnemyState();
     window.addEventListener("resize", syncMobileEnemyState);
     window.addEventListener("orientationchange", syncMobileEnemyState);

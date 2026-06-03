@@ -28,42 +28,49 @@
                 </p>
             </header>
 
-            <section class="packGroups" aria-label="Prize packs">
-                <div class="packGroup" data-pack-id="hearts">
-                    <table id="hearts"></table>
-                    <button type="button" data-action="increment" aria-label="Advance hearts prize pack">&rarr;</button>
-                </div>
-                <div class="packGroup" data-pack-id="rupees">
-                    <table id="rupees"></table>
-                    <button type="button" data-action="increment" aria-label="Advance rupees prize pack">&rarr;</button>
-                </div>
-                <div class="packGroup" data-pack-id="magic">
-                    <table id="magic"></table>
-                    <button type="button" data-action="increment" aria-label="Advance magic prize pack">&rarr;</button>
-                </div>
-                <div class="packGroup" data-pack-id="bombs">
-                    <table id="bombs"></table>
-                    <button type="button" data-action="increment" aria-label="Advance bombs prize pack">&rarr;</button>
-                </div>
-                <div class="packGroup" data-pack-id="arrows">
-                    <table id="arrows"></table>
-                    <button type="button" data-action="increment" aria-label="Advance arrows prize pack">&rarr;</button>
-                </div>
-                <div class="packGroup" data-pack-id="variety-1">
-                    <table id="variety-1"></table>
-                    <button type="button" data-action="increment" aria-label="Advance variety 1 prize pack">&rarr;</button>
-                </div>
-                <div class="packGroup" data-pack-id="variety-2">
-                    <table id="variety-2"></table>
-                    <button type="button" data-action="increment" aria-label="Advance variety 2 prize pack">&rarr;</button>
-                </div>
-            </section>
+            <div class="trackerStage">
+                <section class="packGroups" aria-label="Prize packs">
+                    <div class="packGroup" data-pack-id="hearts">
+                        <table id="hearts"></table>
+                        <button type="button" data-action="increment" aria-label="Advance hearts prize pack">&rarr;</button>
+                    </div>
+                    <div class="packGroup" data-pack-id="rupees">
+                        <table id="rupees"></table>
+                        <button type="button" data-action="increment" aria-label="Advance rupees prize pack">&rarr;</button>
+                    </div>
+                    <div class="packGroup" data-pack-id="magic">
+                        <table id="magic"></table>
+                        <button type="button" data-action="increment" aria-label="Advance magic prize pack">&rarr;</button>
+                    </div>
+                    <div class="packGroup" data-pack-id="bombs">
+                        <table id="bombs"></table>
+                        <button type="button" data-action="increment" aria-label="Advance bombs prize pack">&rarr;</button>
+                    </div>
+                    <div class="packGroup" data-pack-id="arrows">
+                        <table id="arrows"></table>
+                        <button type="button" data-action="increment" aria-label="Advance arrows prize pack">&rarr;</button>
+                    </div>
+                    <div class="packGroup" data-pack-id="variety-1">
+                        <table id="variety-1"></table>
+                        <button type="button" data-action="increment" aria-label="Advance variety 1 prize pack">&rarr;</button>
+                    </div>
+                    <div class="packGroup" data-pack-id="variety-2">
+                        <table id="variety-2"></table>
+                        <button type="button" data-action="increment" aria-label="Advance variety 2 prize pack">&rarr;</button>
+                    </div>
+                </section>
+
+                <section class="controlsPanel" id="controlsPanel" aria-label="Controls" aria-hidden="true">
+                    <h2>Controls</h2>
+                    <div class="controlsList" id="controlsList"></div>
+                </section>
+            </div>
 
             <footer class="appFooter">
                 <div class="footerActions">
                     <button type="button" id="resetButton">Reset</button>
-                    <button type="button" id="toggleEnemiesButton" aria-pressed="false">Show enemies</button>
-                    <button type="button" id="faqButton">FAQ</button>
+                    <button type="button" id="toggleEnemiesButton" aria-pressed="false">Show Enemies</button>
+                    <button type="button" id="controlsButton" aria-controls="controlsPanel" aria-pressed="false">Show Controls</button>
                 </div>
             </footer>
         </main>

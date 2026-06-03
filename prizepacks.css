@@ -127,8 +127,17 @@ body {
     line-height: 1.15;
 }
 
-.packGroups {
+.trackerStage {
     flex: 1 1 auto;
+    position: relative;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.packGroups {
+    width: 100%;
+    height: 100%;
     min-height: 0;
     overflow: hidden;
     display: grid;
@@ -148,6 +157,11 @@ body {
     border-radius: 8px;
     background: var(--panel);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.packGroup.isSelected {
+    border-color: var(--gold);
+    box-shadow: inset 0 0 0 1px rgba(244, 193, 93, 0.7), 0 0 12px rgba(244, 193, 93, 0.12);
 }
 
 .showEnemies .packGroup {
@@ -330,6 +344,216 @@ button:disabled {
     font-size: 0.78rem;
 }
 
+.controlsPanel {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    min-height: 0;
+    overflow: auto;
+    display: grid;
+    align-content: start;
+    gap: clamp(8px, 1.5vh, 14px);
+    padding: clamp(10px, 2vh, 18px);
+    border: 1px solid #2d3239;
+    border-radius: 8px;
+    background: var(--panel);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 -18px 42px rgba(0, 0, 0, 0.28);
+    pointer-events: none;
+    transform: translateY(calc(100% + var(--app-gap)));
+    visibility: hidden;
+    transition: none;
+}
+
+.controlsPanel.isOpen,
+.controlsPanel.isClosing {
+    visibility: visible;
+    transition: transform 200ms ease;
+}
+
+.controlsPanel.isOpen {
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.controlsPanel.isClosing {
+    pointer-events: none;
+    transform: translateY(calc(100% + var(--app-gap)));
+}
+
+.controlsPanel h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(1rem, 2.6vh, 1.35rem);
+    line-height: 1.1;
+    text-align: center;
+}
+
+.showControls .packGroups {
+    pointer-events: none;
+}
+
+.controlsList {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(160px, 160px);
+    gap: 8px 12px;
+    align-items: center;
+    width: min(100%, 520px);
+    margin: 0 auto;
+}
+
+.controlAction,
+.controlBind,
+.controlSelect {
+    min-width: 0;
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    line-height: 1.15;
+}
+
+.controlAction {
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.controlActionWithTooltip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    overflow: visible;
+}
+
+.controlTooltipIndicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    color: var(--gold);
+    font-size: 0.68rem;
+    line-height: 1;
+}
+
+.controlTooltip {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 8px);
+    z-index: 5;
+    width: min(380px, calc(var(--tracker-width) - 36px));
+    padding: 10px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: #17191c;
+    color: var(--text);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.35;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+    white-space: normal;
+}
+
+.controlTooltip p {
+    margin: 0;
+}
+
+.controlTooltip p + p {
+    margin-top: 7px;
+}
+
+.controlTooltip strong {
+    color: var(--gold);
+}
+
+.controlActionWithTooltip:hover .controlTooltip,
+.controlActionWithTooltip:focus-visible .controlTooltip {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.resetControlsButton {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid #7a6d50;
+    border-radius: 6px;
+    background: var(--button);
+    color: #171717;
+    font: inherit;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.resetControlsButton:hover {
+    background: var(--button-hover);
+    transform: none;
+}
+
+.controlBind,
+.controlSelect {
+    justify-self: stretch;
+    width: 160px;
+    min-width: 160px;
+    height: auto;
+    min-height: 0;
+    border-radius: 6px;
+    background: #242027;
+    color: var(--gold);
+    cursor: pointer;
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.controlSelect {
+    appearance: auto;
+}
+
+.controlBind:hover,
+.controlSelect:hover {
+    border-color: var(--line-strong);
+    background: #2d2732;
+    transform: none;
+}
+
+.controlBind[aria-pressed="true"] {
+    border-color: var(--gold);
+    background: var(--accent-soft);
+    color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .controlsPanel {
+        transition: none;
+    }
+}
+
+@media (pointer: coarse) {
+    .footerActions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #controlsButton,
+    .controlsPanel {
+        display: none;
+    }
+}
+
 .packGroups::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -381,6 +605,7 @@ button:disabled {
 
     .packGroups {
         width: 100%;
+        height: 100%;
         overflow: hidden;
     }
 
@@ -448,6 +673,28 @@ button:disabled {
     #toggleEnemiesButton:disabled {
         font-size: 0.74rem;
     }
+
+    .controlsPanel {
+        padding: 8px;
+    }
+
+    .controlsList {
+        grid-template-columns: minmax(0, 1fr) minmax(116px, 116px);
+        gap: 5px 7px;
+    }
+
+    .controlAction,
+    .controlBind,
+    .controlSelect {
+        padding: 5px 6px;
+        font-size: 0.72rem;
+    }
+
+    .controlBind,
+    .controlSelect {
+        width: 116px;
+        min-width: 116px;
+    }
 }
 
 @media (max-height: 560px) {
@@ -474,6 +721,7 @@ button:disabled {
     }
 
     .packGroups {
+        height: 100%;
         gap: 3px;
     }
 
@@ -509,6 +757,28 @@ button:disabled {
         max-width: 24px;
         max-height: 24px;
     }
+
+    .controlsPanel {
+        padding: 7px;
+    }
+
+    .controlsList {
+        grid-template-columns: minmax(0, 1fr) minmax(128px, 128px);
+        gap: 4px 6px;
+    }
+
+    .controlAction,
+    .controlBind,
+    .controlSelect {
+        padding: 4px 6px;
+        font-size: 0.66rem;
+    }
+
+    .controlBind,
+    .controlSelect {
+        width: 128px;
+        min-width: 128px;
+    }
 }
 
 @media (max-height: 380px) {
@@ -537,6 +807,7 @@ button:disabled {
     }
 
     .packGroups {
+        height: 100%;
         gap: 2px;
     }
 
@@ -576,6 +847,28 @@ button:disabled {
         padding: 0 4px;
         font-size: 0.58rem;
     }
+
+    .controlsPanel {
+        padding: 4px;
+    }
+
+    .controlsList {
+        grid-template-columns: minmax(0, 1fr) minmax(104px, 104px);
+        gap: 3px 5px;
+    }
+
+    .controlAction,
+    .controlBind,
+    .controlSelect {
+        padding: 2px 4px;
+        font-size: 0.55rem;
+    }
+
+    .controlBind,
+    .controlSelect {
+        width: 104px;
+        min-width: 104px;
+    }
 }
 
 @media (pointer: coarse) and (orientation: landscape) {
@@ -614,6 +907,7 @@ button:disabled {
 
     .packGroups {
         width: auto;
+        height: 100%;
         overflow: hidden;
         gap: 3px;
     }
