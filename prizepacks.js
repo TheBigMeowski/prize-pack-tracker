@@ -225,7 +225,7 @@ function syncMobileEnemyState(){
     if (mobilePortrait) {
         setEnemyPanelsVisible(false);
         toggleButton.disabled = true;
-        toggleButton.textContent = "Enemies hidden in portrait mode";
+        toggleButton.innerHTML = "Enemies hidden<br>in portrait mode";
         toggleButton.setAttribute("aria-pressed", "false");
         return;
     }
@@ -233,7 +233,7 @@ function syncMobileEnemyState(){
     if (mobileLandscape) {
         setEnemyPanelsVisible(true);
         toggleButton.disabled = true;
-        toggleButton.textContent = "Enemies shown in landscape mode";
+        toggleButton.innerHTML = "Enemies shown<br>in landscape mode";
         toggleButton.setAttribute("aria-pressed", "true");
         return;
     }

@@ -276,7 +276,7 @@ button:disabled {
 }
 
 #toggleEnemiesButton:disabled {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
 }
 
 .packGroups::-webkit-scrollbar {
@@ -387,9 +387,15 @@ button:disabled {
 
     .footerActions button {
         min-width: 0;
-        height: 48px;
-        min-height: 48px;
+        height: 52px;
+        min-height: 52px;
+        padding: 2px 4px;
         font-size: 0.85rem;
+        line-height: 1.15;
+    }
+
+    #toggleEnemiesButton:disabled {
+        font-size: 0.74rem;
     }
 }
 
@@ -520,9 +526,14 @@ button:disabled {
     }
 
     .footerActions button {
-        height: 24px;
-        min-height: 24px;
+        height: 30px;
+        min-height: 30px;
         padding: 0 6px;
         font-size: 0.68rem;
+        line-height: 1.05;
+    }
+
+    #toggleEnemiesButton:disabled {
+        font-size: 0.62rem;
     }
 }
