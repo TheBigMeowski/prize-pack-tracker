@@ -1,48 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>ALTTP Prize Pack Tracker by Meowski</title>
-        <!-- TODO put css etc in here -->
-        <script src="prizepacks.js"></script>
         <link rel="stylesheet" href="prizepacks.css">
+        <script src="prizepacks.js" defer></script>
     </head>
     <body>
-        <h1>ALTTP Prize Pack Tracker by Meowski</h1>
-        <div class="packGroups">
-            <div class="packGroup">
-                <table id="hearts"></table>
-                <button onclick="incrementPackTable(heartPack)">&rarr;</button>
-            </div>
-            <div class="packGroup">
-                <table id="rupees"></table>
-                <button onclick="incrementPackTable(rupeePack)">&rarr;</button>
-            </div>
-            <div class="packGroup">
-                <table id="magic"></table>
-                <button onclick="incrementPackTable(magicPack)">&rarr;</button>
-            </div>
-            <div class="packGroup">
-                <table id="bombs"></table>
-                <button onclick="incrementPackTable(bombPack)">&rarr;</button>
-            </div>
-            <div class="packGroup">
-                <table id="arrows"></table>
-                <button onclick="incrementPackTable(arrowPack)">&rarr;</button>
-            </div>
-            <div class="packGroup">
-                <table id="var 1"></table>
-                <button onclick="incrementPackTable(varietyPackOne)">&rarr;</button>
-            </div>
-            <div class="packGroup">
-                <table id="var 2"></table>
-                <button onclick="incrementPackTable(varietyPackTwo)">&rarr;</button>
-            </div>
-        </div>
-        <div>
-            <button onclick="resetTables()">reset</button>
-        </div>
-        <div>
-            <a href="https://alttp-wiki.net/index.php/Enemy_prize_packs">More information on prize packs</a>
-        </div>
+        <main class="app">
+            <header class="appHeader">
+                <h1>ALTTP Prize Pack Tracker</h1>
+                <p>by Meowski</p>
+            </header>
+
+            <section class="packGroups" aria-label="Prize packs">
+                <div class="packGroup" data-pack-id="hearts">
+                    <table id="hearts"></table>
+                    <button type="button" data-action="increment" aria-label="Advance hearts prize pack">&rarr;</button>
+                </div>
+                <div class="packGroup" data-pack-id="rupees">
+                    <table id="rupees"></table>
+                    <button type="button" data-action="increment" aria-label="Advance rupees prize pack">&rarr;</button>
+                </div>
+                <div class="packGroup" data-pack-id="magic">
+                    <table id="magic"></table>
+                    <button type="button" data-action="increment" aria-label="Advance magic prize pack">&rarr;</button>
+                </div>
+                <div class="packGroup" data-pack-id="bombs">
+                    <table id="bombs"></table>
+                    <button type="button" data-action="increment" aria-label="Advance bombs prize pack">&rarr;</button>
+                </div>
+                <div class="packGroup" data-pack-id="arrows">
+                    <table id="arrows"></table>
+                    <button type="button" data-action="increment" aria-label="Advance arrows prize pack">&rarr;</button>
+                </div>
+                <div class="packGroup" data-pack-id="variety-1">
+                    <table id="variety-1"></table>
+                    <button type="button" data-action="increment" aria-label="Advance variety 1 prize pack">&rarr;</button>
+                </div>
+                <div class="packGroup" data-pack-id="variety-2">
+                    <table id="variety-2"></table>
+                    <button type="button" data-action="increment" aria-label="Advance variety 2 prize pack">&rarr;</button>
+                </div>
+            </section>
+
+            <footer class="appFooter">
+                <div class="footerActions">
+                    <button type="button" id="resetButton">Reset</button>
+                    <button type="button" id="toggleEnemiesButton" aria-pressed="false">Show enemies</button>
+                </div>
+                <a href="https://alttp-wiki.net/index.php/Enemy_prize_packs">More information on prize packs</a>
+            </footer>
+        </main>
     </body>
 </html>
