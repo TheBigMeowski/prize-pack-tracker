@@ -79,7 +79,7 @@ body {
 .packGroups {
     flex: 1 1 auto;
     min-height: 0;
-    overflow: auto;
+    overflow: hidden;
     display: grid;
     grid-template-rows: repeat(7, minmax(0, 1fr));
     gap: clamp(4px, 0.8vh, 10px);
@@ -226,6 +226,15 @@ button:hover {
     transform: translateY(-1px);
 }
 
+button:disabled {
+    border-color: #4b4f57;
+    background: #3b3f46;
+    color: #aeb4bd;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
 .packGroup button {
     width: var(--drop-size);
     font-size: 1.3rem;
@@ -259,6 +268,15 @@ button:hover {
 
 .footerActions button {
     width: 100%;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 10px;
+    white-space: normal;
+    line-height: 1.1;
+}
+
+#toggleEnemiesButton:disabled {
+    font-size: 0.72rem;
 }
 
 .packGroups::-webkit-scrollbar {
@@ -274,35 +292,104 @@ button:hover {
 }
 
 @media (max-width: 680px) {
+    :root {
+        --drop-size: clamp(16px, min(calc((100vw - 92px) / 9), calc((100dvh - 154px) / 7)), 44px);
+        --enemy-size: clamp(18px, calc(var(--drop-size) * 0.72), 28px);
+        --drop-table-width: calc(100vw - 72px);
+        --tracker-width: 100%;
+        --enemy-panel-width: 100%;
+    }
+
     .appHeader,
     .appFooter {
-        align-items: flex-start;
-        flex-direction: column;
+        width: 100%;
     }
 
     .app {
-        min-width: var(--tracker-width);
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        padding: 8px;
     }
 
     .app.showEnemies {
-        min-width: calc(var(--enemy-panel-width) + var(--tracker-width) + 10px);
+        min-width: 0;
+    }
+
+    .appHeader {
+        gap: 10px;
+    }
+
+    .appHeader h1 {
+        font-size: clamp(1rem, 5vw, 1.35rem);
+    }
+
+    .appHeader p {
+        font-size: 0.8rem;
+    }
+
+    .packGroups {
+        width: 100%;
+        overflow: hidden;
     }
 
     .packGroup {
-        grid-template-columns: var(--drop-table-width) var(--drop-size);
-        gap: 6px 10px;
+        width: 100%;
+        grid-template-columns: minmax(0, 1fr) var(--drop-size);
+        gap: 6px;
+        padding: 5px;
     }
 
     .showEnemies .packGroup {
-        grid-template-columns: var(--enemy-panel-width) var(--drop-table-width) var(--drop-size);
+        grid-template-columns: minmax(0, 1fr) var(--drop-size);
+    }
+
+    .showEnemies .packGroup > table {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .showEnemies .packGroup > button {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .enemyPanel {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .showEnemies .enemyPanel {
+        width: 100%;
+        height: auto;
+        min-height: var(--drop-size);
+    }
+
+    table {
+        width: 100%;
+        height: var(--drop-size);
+        border-spacing: 3px;
+    }
+
+    .packCell {
+        width: auto;
+        height: var(--drop-size);
     }
 
     .packGroup button {
         width: var(--drop-size);
+        height: var(--drop-size);
     }
 
     .footerActions {
-        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .footerActions button {
+        min-width: 0;
+        height: 48px;
+        min-height: 48px;
+        font-size: 0.85rem;
     }
 }
 
@@ -328,5 +415,114 @@ button:hover {
     .enemyPanel img {
         max-width: 24px;
         max-height: 24px;
+    }
+}
+
+@media (pointer: coarse) and (orientation: landscape) {
+    :root {
+        --drop-size: clamp(12px, min(calc((100dvh - 160px) / 7), calc((100vw - 238px) / 10)), 34px);
+        --enemy-size: clamp(12px, calc(var(--drop-size) * 0.7), 24px);
+        --enemy-panel-width: clamp(120px, 20vw, 200px);
+        --drop-table-width: calc((var(--drop-size) * 8) + 45px);
+        --tracker-width: calc(var(--drop-table-width) + var(--drop-size) + 30px);
+    }
+
+    .app {
+        width: fit-content;
+        min-width: calc(var(--enemy-panel-width) + var(--tracker-width) + 10px);
+        max-width: none;
+        padding: 4px 8px;
+        gap: 4px;
+    }
+
+    .appHeader,
+    .appFooter {
+        width: calc(var(--enemy-panel-width) + var(--tracker-width) + 10px);
+    }
+
+    .appHeader {
+        padding-bottom: 4px;
+    }
+
+    .appHeader h1 {
+        font-size: 1.1rem;
+    }
+
+    .appHeader p {
+        font-size: 0.72rem;
+    }
+
+    .packGroups {
+        width: auto;
+        overflow: hidden;
+        gap: 3px;
+    }
+
+    .packGroup {
+        width: auto;
+        grid-template-columns: var(--drop-table-width) var(--drop-size);
+        align-items: center;
+        gap: 8px;
+        padding: 3px;
+    }
+
+    .showEnemies .packGroup {
+        grid-template-columns: var(--enemy-panel-width) var(--drop-table-width) var(--drop-size);
+    }
+
+    .showEnemies .packGroup > table {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .showEnemies .packGroup > button {
+        grid-column: 3;
+        grid-row: 1;
+    }
+
+    .enemyPanel {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .showEnemies .enemyPanel {
+        width: var(--enemy-panel-width);
+        height: 100%;
+        min-height: 0;
+        max-height: 100%;
+        overflow: auto;
+        padding: 4px;
+        gap: 3px 5px;
+    }
+
+    table {
+        width: var(--drop-table-width);
+        height: var(--drop-size);
+        border-spacing: 3px;
+    }
+
+    .packCell {
+        width: var(--drop-size);
+        height: var(--drop-size);
+    }
+
+    .packGroup button {
+        width: var(--drop-size);
+        height: var(--drop-size);
+    }
+
+    .appFooter {
+        padding-top: 3px;
+    }
+
+    .footerActions {
+        gap: 6px;
+    }
+
+    .footerActions button {
+        height: 24px;
+        min-height: 24px;
+        padding: 0 6px;
+        font-size: 0.68rem;
     }
 }

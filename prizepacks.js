@@ -203,14 +203,43 @@ function resetTables(){
     prizePacks.forEach((pack) => updatePackTable(pack, 0));
 }
 
-function toggleEnemyPanels(){
+function setEnemyPanelsVisible(shouldShowEnemies){
     const app = document.querySelector(".app");
-    const shouldShowEnemies = !app.classList.contains("showEnemies");
     app.classList.toggle("showEnemies", shouldShowEnemies);
 
     const toggleButton = document.getElementById("toggleEnemiesButton");
     toggleButton.textContent = shouldShowEnemies ? "Hide enemies" : "Show enemies";
     toggleButton.setAttribute("aria-pressed", shouldShowEnemies.toString());
+}
+
+function toggleEnemyPanels(){
+    const shouldShowEnemies = !document.querySelector(".app").classList.contains("showEnemies");
+    setEnemyPanelsVisible(shouldShowEnemies);
+}
+
+function syncMobileEnemyState(){
+    const mobilePortrait = window.matchMedia("(pointer: coarse) and (orientation: portrait)").matches;
+    const mobileLandscape = window.matchMedia("(pointer: coarse) and (orientation: landscape)").matches;
+    const toggleButton = document.getElementById("toggleEnemiesButton");
+
+    if (mobilePortrait) {
+        setEnemyPanelsVisible(false);
+        toggleButton.disabled = true;
+        toggleButton.textContent = "Enemies hidden in portrait mode";
+        toggleButton.setAttribute("aria-pressed", "false");
+        return;
+    }
+
+    if (mobileLandscape) {
+        setEnemyPanelsVisible(true);
+        toggleButton.disabled = true;
+        toggleButton.textContent = "Enemies shown in landscape mode";
+        toggleButton.setAttribute("aria-pressed", "true");
+        return;
+    }
+
+    toggleButton.disabled = false;
+    setEnemyPanelsVisible(document.querySelector(".app").classList.contains("showEnemies"));
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -225,4 +254,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById("resetButton").addEventListener("click", resetTables);
     document.getElementById("toggleEnemiesButton").addEventListener("click", toggleEnemyPanels);
+    syncMobileEnemyState();
+    window.addEventListener("resize", syncMobileEnemyState);
+    window.addEventListener("orientationchange", syncMobileEnemyState);
 });
