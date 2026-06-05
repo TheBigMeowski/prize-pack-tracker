@@ -470,7 +470,7 @@ function createResetControlsButton(){
     const button = document.createElement("button");
     button.type = "button";
     button.className = "resetControlsButton";
-    button.textContent = "Reset Options to Default";
+    button.textContent = "Reset Settings to Default";
     button.addEventListener("click", resetControlsToDefault);
     return button;
 }
@@ -669,7 +669,7 @@ function setControlsVisible(shouldShowControls){
     app.classList.toggle("showControls", shouldShowControls);
     packGroups.inert = shouldShowControls;
     packGroups.setAttribute("aria-hidden", shouldShowControls.toString());
-    controlsButton.textContent = shouldShowControls ? "Hide Options" : "Options";
+    controlsButton.textContent = shouldShowControls ? "Hide Settings" : "Settings";
     controlsButton.setAttribute("aria-pressed", shouldShowControls.toString());
 
     if (shouldShowControls) {
