@@ -141,6 +141,7 @@ const utilityKeyBindings = [
     {id:"toggleEnemies", action:"Show Enemies", key:null, label:"None"},
 ];
 
+const controlsStorageKey = "prizePackTracker.controls.v2";
 const defaultBindings = new Map();
 
 const selectPackBindings = prizePacks.map((pack, index) => ({
@@ -161,6 +162,15 @@ const selectAndIncrementPackBindings = prizePacks.map((pack, index) => ({
     behavior:"selectAndIncrement",
 }));
 
+const eitherSelectPackBindings = prizePacks.map((pack, index) => ({
+    id:`eitherSelectPack${index + 1}`,
+    action:`Select Prize Pack ${index + 1} (${formatPackName(pack.label)})`,
+    key:String(index + 1),
+    label:String(index + 1),
+    packIndex:index,
+    behavior:"select",
+}));
+
 const eitherIncrementDefaults = ["q", "w", "e", "r", "t", "y", "u"];
 const eitherIncrementPackBindings = prizePacks.map((pack, index) => ({
     id:`eitherIncrementPack${index + 1}`,
@@ -176,6 +186,7 @@ const eitherIncrementPackBindings = prizePacks.map((pack, index) => ({
     ...utilityKeyBindings,
     ...selectPackBindings,
     ...selectAndIncrementPackBindings,
+    ...eitherSelectPackBindings,
     ...eitherIncrementPackBindings,
 ].forEach((binding) => {
     defaultBindings.set(binding.id, {key:binding.key, label:binding.label});
@@ -193,13 +204,24 @@ const selectionModes = {
     either: {
         label:"Either",
         bindings:[
-            ...selectPackBindings,
+            ...eitherSelectPackBindings,
             ...eitherIncrementPackBindings,
         ],
     },
 };
 
 let selectionMode = "selectAndIncrement";
+
+function getAllKeyBindings(){
+    return [
+        ...coreKeyBindings,
+        ...utilityKeyBindings,
+        ...selectPackBindings,
+        ...selectAndIncrementPackBindings,
+        ...eitherSelectPackBindings,
+        ...eitherIncrementPackBindings,
+    ];
+}
 
 function getActiveKeyBindings(){
     return [
@@ -209,44 +231,17 @@ function getActiveKeyBindings(){
     ];
 }
 
-function getEitherBindingById(bindingId){
-    return selectionModes.either.bindings.find((binding) => binding.id === bindingId);
-}
-
-function syncSharedPackBinding(binding){
-    if (binding.id.startsWith("selectPack")) {
-        const eitherBinding = getEitherBindingById(binding.id);
-        if (eitherBinding) {
-            eitherBinding.key = binding.key;
-            eitherBinding.label = binding.label;
-        }
-        return;
-    }
-
-    if (binding.id.startsWith("selectIncrementPack")) {
-        const packNumber = binding.id.replace("selectIncrementPack", "");
-        const eitherBinding = getEitherBindingById(`eitherIncrementPack${packNumber}`);
-        if (eitherBinding && selectionMode !== "either") {
-            eitherBinding.key = binding.key;
-            eitherBinding.label = binding.label;
-        }
-    }
-}
-
 function setSelectionMode(nextMode){
+    if (!selectionModes[nextMode]) return;
+
     selectionMode = nextMode;
     pendingRebindId = null;
+    saveControlsSettings();
     renderControlsMenu();
 }
 
 function resetControlsToDefault(){
-    [
-        ...coreKeyBindings,
-        ...utilityKeyBindings,
-        ...selectPackBindings,
-        ...selectAndIncrementPackBindings,
-        ...eitherIncrementPackBindings,
-    ].forEach((binding) => {
+    getAllKeyBindings().forEach((binding) => {
         const defaults = defaultBindings.get(binding.id);
         binding.key = defaults.key;
         binding.label = defaults.label;
@@ -254,6 +249,7 @@ function resetControlsToDefault(){
 
     selectionMode = "selectAndIncrement";
     pendingRebindId = null;
+    saveControlsSettings();
     renderControlsMenu();
 }
 
@@ -487,7 +483,7 @@ function createSelectionModeTooltip(){
     tooltip.append(
         createTooltipLine("Increment", `pressing ${getTooltipKey("selectIncrementPack1")} selects and increments the Hearts pack`),
         createTooltipLine("Select", `pressing ${getTooltipKey("selectPack1")} selects the Hearts pack`),
-        createTooltipLine("Either", `pressing ${getTooltipKey("selectPack1")} selects the Hearts pack, while pressing ${getTooltipKey("eitherIncrementPack1")} selects and increments the Hearts pack`),
+        createTooltipLine("Either", `pressing ${getTooltipKey("eitherSelectPack1")} selects the Hearts pack, while pressing ${getTooltipKey("eitherIncrementPack1")} selects and increments the Hearts pack`),
     );
 
     return tooltip;
@@ -505,6 +501,7 @@ function getTooltipKey(bindingId){
     const binding = [
         ...selectPackBindings,
         ...selectAndIncrementPackBindings,
+        ...eitherSelectPackBindings,
         ...eitherIncrementPackBindings,
     ].find((candidate) => candidate.id === bindingId);
 
@@ -542,7 +539,88 @@ function normalizeKeyLabel(key){
         " ":"Space",
     };
 
+    if (key === null) return "None";
     return labels[key] || (key.length === 1 ? key.toUpperCase() : key);
+}
+
+function serializeControlsSettings(){
+    const bindings = {};
+
+    getAllKeyBindings().forEach((binding) => {
+        bindings[binding.id] = binding.key;
+    });
+
+    return {
+        version:2,
+        selectionMode,
+        bindings,
+    };
+}
+
+function saveControlsSettings(){
+    try {
+        localStorage.setItem(controlsStorageKey, JSON.stringify(serializeControlsSettings()));
+    } catch (error) {
+        console.warn("Unable to save controls settings.", error);
+    }
+}
+
+function applySavedBinding(binding, key){
+    binding.key = key;
+    binding.label = normalizeKeyLabel(key);
+}
+
+function removeDuplicateKeys(bindings){
+    const usedKeys = new Set();
+
+    bindings.forEach((binding) => {
+        if (!binding.key) return;
+
+        if (usedKeys.has(binding.key)) {
+            applySavedBinding(binding, null);
+            return;
+        }
+
+        usedKeys.add(binding.key);
+    });
+}
+
+function sanitizeControlBindings(){
+    Object.keys(selectionModes).forEach((mode) => {
+        removeDuplicateKeys([
+            ...coreKeyBindings,
+            ...utilityKeyBindings,
+            ...selectionModes[mode].bindings,
+        ]);
+    });
+}
+
+function loadControlsSettings(){
+    let savedSettings = null;
+
+    try {
+        savedSettings = JSON.parse(localStorage.getItem(controlsStorageKey));
+    } catch (error) {
+        console.warn("Unable to load controls settings.", error);
+        return;
+    }
+
+    if (!savedSettings || savedSettings.version !== 2 || !savedSettings.bindings || typeof savedSettings.bindings !== "object") return;
+
+    if (selectionModes[savedSettings.selectionMode]) {
+        selectionMode = savedSettings.selectionMode;
+    }
+
+    getAllKeyBindings().forEach((binding) => {
+        if (!Object.prototype.hasOwnProperty.call(savedSettings.bindings, binding.id)) return;
+
+        const savedKey = savedSettings.bindings[binding.id];
+        if (savedKey !== null && typeof savedKey !== "string") return;
+
+        applySavedBinding(binding, savedKey);
+    });
+
+    sanitizeControlBindings();
 }
 
 function rebindControl(event){
@@ -552,8 +630,8 @@ function rebindControl(event){
         const currentBinding = getActiveKeyBindings().find((binding) => binding.id === pendingRebindId);
         currentBinding.key = null;
         currentBinding.label = "None";
-        syncSharedPackBinding(currentBinding);
         pendingRebindId = null;
+        saveControlsSettings();
         renderControlsMenu();
         return true;
     }
@@ -573,11 +651,10 @@ function rebindControl(event){
     if (conflictingBinding) {
         conflictingBinding.key = previousKey;
         conflictingBinding.label = previousLabel;
-        syncSharedPackBinding(conflictingBinding);
     }
 
-    syncSharedPackBinding(currentBinding);
     pendingRebindId = null;
+    saveControlsSettings();
     renderControlsMenu();
     return true;
 }
@@ -724,6 +801,7 @@ document.addEventListener("DOMContentLoaded", function() {
         packGroup.appendChild(createEnemyPanel(pack));
     });
 
+    loadControlsSettings();
     renderControlsMenu();
     document.getElementById("resetButton").addEventListener("click", resetTables);
     document.getElementById("toggleEnemiesButton").addEventListener("click", toggleEnemyPanels);
