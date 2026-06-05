@@ -208,6 +208,10 @@ const selectionModes = {
             ...eitherIncrementPackBindings,
         ],
     },
+    none: {
+        label:"None",
+        bindings:[],
+    },
 };
 
 let selectionMode = "selectAndIncrement";
@@ -699,8 +703,14 @@ function handleDocumentClick(event){
 
     const controlsPanel = document.getElementById("controlsPanel");
     const controlsButton = document.getElementById("controlsButton");
+    const eventPath = event.composedPath();
 
-    if (controlsPanel.contains(event.target) || controlsButton.contains(event.target)) return;
+    if (
+        eventPath.includes(controlsPanel) ||
+        eventPath.includes(controlsButton) ||
+        controlsPanel.contains(event.target) ||
+        controlsButton.contains(event.target)
+    ) return;
 
     setControlsVisible(false);
 }
