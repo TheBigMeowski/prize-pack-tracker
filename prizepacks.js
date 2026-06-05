@@ -138,7 +138,7 @@ const coreKeyBindings = [
 
 const utilityKeyBindings = [
     {id:"resetTracker", action:"Reset", key:null, label:"None"},
-    {id:"toggleEnemies", action:"Show Enemies", key:null, label:"None"},
+    {id:"toggleEnemies", action:"Toggle Enemies", key:null, label:"None"},
 ];
 
 const controlsStorageKey = "prizePackTracker.controls.v2";
@@ -440,10 +440,6 @@ function renderControlsMenu(){
 }
 
 function getBindingActionLabel(binding){
-    if (binding.id === "toggleEnemies") {
-        return document.querySelector(".app").classList.contains("showEnemies") ? "Hide Enemies" : "Show Enemies";
-    }
-
     return binding.action;
 }
 
@@ -470,7 +466,7 @@ function createResetControlsButton(){
     const button = document.createElement("button");
     button.type = "button";
     button.className = "resetControlsButton";
-    button.textContent = "Reset Controls to Default";
+    button.textContent = "Reset Options to Default";
     button.addEventListener("click", resetControlsToDefault);
     return button;
 }
@@ -669,7 +665,7 @@ function setControlsVisible(shouldShowControls){
     app.classList.toggle("showControls", shouldShowControls);
     packGroups.inert = shouldShowControls;
     packGroups.setAttribute("aria-hidden", shouldShowControls.toString());
-    controlsButton.textContent = shouldShowControls ? "Hide Controls" : "Show Controls";
+    controlsButton.textContent = shouldShowControls ? "Hide Options" : "Options";
     controlsButton.setAttribute("aria-pressed", shouldShowControls.toString());
 
     if (shouldShowControls) {
@@ -696,6 +692,17 @@ function setControlsVisible(shouldShowControls){
 function toggleControls(){
     if (window.matchMedia("(pointer: coarse)").matches) return;
     setControlsVisible(!document.querySelector(".app").classList.contains("showControls"));
+}
+
+function handleDocumentClick(event){
+    if (!document.querySelector(".app").classList.contains("showControls")) return;
+
+    const controlsPanel = document.getElementById("controlsPanel");
+    const controlsButton = document.getElementById("controlsButton");
+
+    if (controlsPanel.contains(event.target) || controlsButton.contains(event.target)) return;
+
+    setControlsVisible(false);
 }
 
 function handleKeyboardControls(event){
@@ -806,6 +813,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("resetButton").addEventListener("click", resetTables);
     document.getElementById("toggleEnemiesButton").addEventListener("click", toggleEnemyPanels);
     document.getElementById("controlsButton").addEventListener("click", toggleControls);
+    document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleKeyboardControls);
     syncMobileEnemyState();
     window.addEventListener("resize", syncMobileEnemyState);
