@@ -586,7 +586,7 @@ button:disabled {
     background-clip: content-box;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 680px) and (pointer: coarse) {
     :root {
         --drop-size: clamp(16px, min(calc((100vw - 92px) / 9), calc((100dvh - 154px) / 7)), 44px);
         --enemy-size: clamp(18px, calc(var(--drop-size) * 0.72), 28px);
@@ -720,7 +720,13 @@ button:disabled {
 
 @media (max-height: 560px) {
     :root {
-        --drop-size: clamp(18px, calc((100dvh - 150px) / 7), 40px);
+        --app-padding-y: 5px;
+        --app-gap: 4px;
+        --header-block: 26px;
+        --footer-block: 34px;
+        --row-gap: 3px;
+        --row-padding-y: 3px;
+        --drop-size: clamp(18px, min(5.8vh, var(--available-row-content-height)), 40px);
         --enemy-size: clamp(14px, calc(var(--drop-size) * 0.7), 24px);
         --enemy-one-row-size: clamp(18px, calc(var(--drop-size) * 0.85), 30px);
         --enemy-panel-width: clamp(260px, 34vw, 360px);
@@ -735,12 +741,29 @@ button:disabled {
     }
 
     .app {
-        padding: 6px 8px;
-        gap: 6px;
+        padding: var(--app-padding-y) 8px;
+        gap: var(--app-gap);
     }
 
     .appHeader {
-        padding-bottom: 4px;
+        align-items: center;
+        padding-bottom: 2px;
+    }
+
+    .appHeader h1 {
+        font-size: 0.95rem;
+        line-height: 1;
+    }
+
+    .creatorBadge,
+    .creatorBadgeIcon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .creatorCredit,
+    .creatorLink {
+        min-height: 18px;
     }
 
     .packGroups {
@@ -766,14 +789,15 @@ button:disabled {
     }
 
     .appFooter {
-        padding-top: 4px;
+        padding-top: 2px;
     }
 
     .footerActions button {
-        height: 28px;
-        min-height: 28px;
-        padding: 0 6px;
-        font-size: 0.72rem;
+        height: 24px;
+        min-height: 24px;
+        padding: 0 5px;
+        font-size: 0.68rem;
+        line-height: 1;
     }
 
     .controlsPanel {
@@ -801,7 +825,13 @@ button:disabled {
 
 @media (max-height: 380px) {
     :root {
-        --drop-size: clamp(10px, calc((100dvh - 112px) / 7), 24px);
+        --app-padding-y: 2px;
+        --app-gap: 2px;
+        --header-block: 18px;
+        --footer-block: 24px;
+        --row-gap: 2px;
+        --row-padding-y: 2px;
+        --drop-size: clamp(10px, min(5.8vh, var(--available-row-content-height)), 24px);
         --enemy-size: clamp(8px, calc(var(--drop-size) * 0.65), 16px);
         --enemy-one-row-size: clamp(10px, calc(var(--drop-size) * 0.8), 20px);
         --enemy-panel-width: clamp(220px, 34vw, 320px);
@@ -810,20 +840,40 @@ button:disabled {
     }
 
     .app {
-        padding: 3px 6px;
-        gap: 3px;
+        padding: var(--app-padding-y) 6px;
+        gap: var(--app-gap);
     }
 
     .appHeader {
-        padding-bottom: 2px;
+        gap: 6px;
+        padding-bottom: 1px;
     }
 
     .appHeader h1 {
-        font-size: 0.95rem;
+        font-size: 0.72rem;
     }
 
     .appHeader p {
-        font-size: 0.65rem;
+        font-size: 0.55rem;
+    }
+
+    .creatorCredit {
+        gap: 4px;
+    }
+
+    .creatorBadge {
+        margin-right: 4px;
+    }
+
+    .creatorBadge,
+    .creatorBadgeIcon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .creatorCredit,
+    .creatorLink {
+        min-height: 14px;
     }
 
     .packGroups {
@@ -862,10 +912,11 @@ button:disabled {
     }
 
     .footerActions button {
-        height: 20px;
-        min-height: 20px;
-        padding: 0 4px;
-        font-size: 0.58rem;
+        height: 16px;
+        min-height: 16px;
+        padding: 0 3px;
+        font-size: 0.5rem;
+        line-height: 1;
     }
 
     .controlsPanel {
