@@ -261,6 +261,7 @@ let selectedPrizePackIndex = 0;
 let showSelectedPrizePack = false;
 let pendingRebindId = null;
 let controlsCloseTimer = null;
+let enemyPanelResizeObserver = null;
 
 prizePacks.forEach((pack) => {
     pack.enemies = enemyPrizePacks[pack.id];
@@ -320,6 +321,79 @@ function createEnemyPanel(prizePack){
     });
 
     return enemySprites;
+}
+
+function getPixelValue(value){
+    const parsedValue = Number.parseFloat(value);
+    return Number.isFinite(parsedValue) ? parsedValue : 0;
+}
+
+function getEnemyPanelContentBox(panel){
+    const styles = window.getComputedStyle(panel);
+
+    return {
+        width: panel.clientWidth - getPixelValue(styles.paddingLeft) - getPixelValue(styles.paddingRight),
+        height: panel.clientHeight - getPixelValue(styles.paddingTop) - getPixelValue(styles.paddingBottom),
+    };
+}
+
+function getEnemyPanelGap(panel){
+    const styles = window.getComputedStyle(panel);
+    const rowGap = getPixelValue(styles.rowGap);
+    const columnGap = getPixelValue(styles.columnGap);
+
+    return {
+        row: rowGap,
+        column: columnGap,
+    };
+}
+
+function getBestEnemySpriteSize(panel){
+    const enemyCount = panel.children.length;
+    const contentBox = getEnemyPanelContentBox(panel);
+
+    if (!enemyCount || contentBox.width <= 0 || contentBox.height <= 0) return null;
+
+    const gap = getEnemyPanelGap(panel);
+    let bestSize = 0;
+    const minimumColumns = Math.ceil(enemyCount / 2);
+
+    for (let columns = minimumColumns; columns <= enemyCount; columns += 1) {
+        const rows = Math.ceil(enemyCount / columns);
+        const widthForSprite = (contentBox.width - (gap.column * (columns - 1))) / columns;
+        const heightForSprite = (contentBox.height - (gap.row * (rows - 1))) / rows;
+        const candidateSize = Math.min(widthForSprite, heightForSprite);
+
+        if (candidateSize > bestSize) bestSize = candidateSize;
+    }
+
+    return Math.max(1, Math.floor(bestSize));
+}
+
+function updateEnemySpriteSizes(){
+    document.querySelectorAll(".enemyPanel").forEach((panel) => {
+        const fittedSize = getBestEnemySpriteSize(panel);
+
+        if (!fittedSize) {
+            panel.style.removeProperty("--fitted-enemy-size");
+            return;
+        }
+
+        panel.style.setProperty("--fitted-enemy-size", `${fittedSize}px`);
+    });
+}
+
+function scheduleEnemySpriteSizeUpdate(){
+    window.requestAnimationFrame(updateEnemySpriteSizes);
+}
+
+function observeEnemyPanel(panel){
+    if (!("ResizeObserver" in window)) return;
+    if (!enemyPanelResizeObserver) {
+        enemyPanelResizeObserver = new ResizeObserver(scheduleEnemySpriteSizeUpdate);
+    }
+
+    enemyPanelResizeObserver.observe(panel);
 }
 
 function incrementPackTable(pack){
@@ -400,6 +474,7 @@ function resetTables(){
 function setEnemyPanelsVisible(shouldShowEnemies){
     const app = document.querySelector(".app");
     app.classList.toggle("showEnemies", shouldShowEnemies);
+    scheduleEnemySpriteSizeUpdate();
 
     const toggleButton = document.getElementById("toggleEnemiesButton");
     toggleButton.textContent = shouldShowEnemies ? "Hide Enemies" : "Show Enemies";
@@ -807,6 +882,11 @@ function syncMobileEnemyState(){
     setEnemyPanelsVisible(document.querySelector(".app").classList.contains("showEnemies"));
 }
 
+function handleViewportChange(){
+    syncMobileEnemyState();
+    scheduleEnemySpriteSizeUpdate();
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     prizePacks.forEach((pack) => {
         createPackTable(pack);
@@ -815,7 +895,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const incrementButton = packGroup.querySelector('[data-action="increment"]');
         bindIncrementButton(incrementButton, pack);
         packGroup.addEventListener("click", () => selectPrizePack(prizePacks.indexOf(pack)));
-        packGroup.appendChild(createEnemyPanel(pack));
+        const enemyPanel = createEnemyPanel(pack);
+        packGroup.appendChild(enemyPanel);
+        observeEnemyPanel(enemyPanel);
     });
 
     loadControlsSettings();
@@ -826,6 +908,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleKeyboardControls);
     syncMobileEnemyState();
-    window.addEventListener("resize", syncMobileEnemyState);
-    window.addEventListener("orientationchange", syncMobileEnemyState);
+    scheduleEnemySpriteSizeUpdate();
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("orientationchange", handleViewportChange);
 });
