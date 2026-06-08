@@ -267,6 +267,13 @@ prizePacks.forEach((pack) => {
     pack.enemies = enemyPrizePacks[pack.id];
 });
 
+function preventMouseFocus(event){
+    if (event.button !== 0) return;
+
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    event.preventDefault();
+}
+
 function formatPackName(label){
     return label
         .split(" ")
@@ -289,6 +296,7 @@ function createPackTable(prizePack){
         cellImg.setAttribute("alt", prizePack.pack[i].name);
 
         cell.appendChild(cellImg);
+        cell.addEventListener("mousedown", preventMouseFocus);
         cell.addEventListener("click", (event) => {
             event.stopPropagation();
             selectPrizePack(prizePacks.indexOf(prizePack));
@@ -967,6 +975,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const packGroup = document.querySelector(`[data-pack-id="${pack.id}"]`);
         const incrementButton = packGroup.querySelector('[data-action="increment"]');
         bindIncrementButton(incrementButton, pack);
+        packGroup.addEventListener("mousedown", preventMouseFocus);
         packGroup.addEventListener("click", () => selectPrizePack(prizePacks.indexOf(pack)));
         const enemyPanel = createEnemyPanel(pack);
         packGroup.appendChild(enemyPanel);
@@ -975,9 +984,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
     loadControlsSettings();
     renderControlsMenu();
-    document.getElementById("resetButton").addEventListener("click", resetTables);
-    document.getElementById("toggleEnemiesButton").addEventListener("click", toggleEnemyPanels);
-    document.getElementById("controlsButton").addEventListener("click", toggleControls);
+    const footerButtons = [
+        document.getElementById("resetButton"),
+        document.getElementById("toggleEnemiesButton"),
+        document.getElementById("controlsButton"),
+    ];
+
+    footerButtons.forEach((button) => button.addEventListener("mousedown", preventMouseFocus));
+    footerButtons[0].addEventListener("click", resetTables);
+    footerButtons[1].addEventListener("click", toggleEnemyPanels);
+    footerButtons[2].addEventListener("click", toggleControls);
     document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleKeyboardControls);
     syncMobileEnemyState();
