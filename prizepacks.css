@@ -24,6 +24,13 @@
     --footer-block: 54px;
     --row-gap: clamp(4px, 0.8vh, 10px);
     --row-padding-y: clamp(5px, 0.8vh, 8px);
+    --separator-width: 1px;
+    --cell-border-width: 1px;
+    --selected-cell-ring-width: 2px;
+    --selected-cell-outer-ring-width: 1px;
+    --selected-cell-glow-size: 14px;
+    --selected-row-ring-width: 1px;
+    --selected-row-glow-size: 12px;
     --row-radius: 8px;
     --cell-radius: 6px;
     --button-radius: 6px;
@@ -80,7 +87,7 @@ body {
     justify-content: space-between;
     gap: 16px;
     white-space: nowrap;
-    border-bottom: 1px solid var(--line);
+    border-bottom: var(--separator-width) solid var(--line);
     padding-bottom: clamp(6px, 1vh, 12px);
 }
 
@@ -168,7 +175,7 @@ body {
     align-items: center;
     gap: clamp(8px, 1.4vw, 14px);
     padding: clamp(5px, 0.8vh, 8px);
-    border: 1px solid #2d3239;
+    border: var(--separator-width) solid #2d3239;
     border-radius: var(--row-radius);
     background: var(--panel);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -176,7 +183,7 @@ body {
 
 .packGroup.isSelected {
     border-color: var(--gold);
-    box-shadow: inset 0 0 0 1px rgba(244, 193, 93, 0.7), 0 0 12px rgba(244, 193, 93, 0.12);
+    box-shadow: inset 0 0 0 var(--selected-row-ring-width) rgba(244, 193, 93, 0.7), 0 0 var(--selected-row-glow-size) rgba(244, 193, 93, 0.12);
 }
 
 .showEnemies .packGroup {
@@ -208,7 +215,7 @@ body {
     padding: 0 8px;
     display: none;
     gap: 4px 7px;
-    border: 1px solid var(--line);
+    border: var(--separator-width) solid var(--line);
     border-radius: var(--enemy-panel-radius);
     background: #17191c;
 }
@@ -254,7 +261,7 @@ td {
     width: var(--drop-size);
     height: var(--drop-size);
     contain: paint;
-    border: 1px solid var(--line);
+    border: var(--cell-border-width) solid var(--line);
     border-radius: var(--cell-radius);
     background: var(--cell);
     cursor: pointer;
@@ -281,7 +288,7 @@ a:focus-visible {
 .packCell.isCurrent {
     background: var(--accent-soft);
     border-color: var(--accent);
-    box-shadow: inset 0 0 0 2px var(--gold), 0 0 0 1px rgba(0, 0, 0, 0.75), 0 0 14px rgba(243, 91, 69, 0.26);
+    box-shadow: inset 0 0 0 var(--selected-cell-ring-width) var(--gold), 0 0 0 var(--selected-cell-outer-ring-width) rgba(0, 0, 0, 0.75), 0 0 var(--selected-cell-glow-size) rgba(243, 91, 69, 0.26);
 }
 
 .packCell img {
@@ -338,7 +345,7 @@ button:disabled {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    border-top: 1px solid var(--line);
+    border-top: var(--separator-width) solid var(--line);
     padding-top: clamp(6px, 1vh, 12px);
 }
 
@@ -730,6 +737,13 @@ button:disabled {
         --footer-block: 34px;
         --row-gap: 3px;
         --row-padding-y: 3px;
+        --separator-width: 0.75px;
+        --cell-border-width: 0.75px;
+        --selected-cell-ring-width: 1px;
+        --selected-cell-outer-ring-width: 0.75px;
+        --selected-cell-glow-size: 7px;
+        --selected-row-ring-width: 0.75px;
+        --selected-row-glow-size: 6px;
         --row-radius: 5px;
         --cell-radius: 4px;
         --button-radius: 4px;
@@ -755,23 +769,37 @@ button:disabled {
 
     .appHeader {
         align-items: center;
+        gap: 6px;
         padding-bottom: 2px;
     }
 
     .appHeader h1 {
-        font-size: 0.95rem;
-        line-height: 1;
+        font-size: 0.78rem;
+        line-height: 0.98;
+    }
+
+    .appHeader p {
+        font-size: 0.58rem;
+        line-height: 0.98;
+    }
+
+    .creatorCredit {
+        gap: 3px;
+    }
+
+    .creatorBadge {
+        margin-right: 3px;
     }
 
     .creatorBadge,
     .creatorBadgeIcon {
-        width: 16px;
-        height: 16px;
+        width: 12px;
+        height: 12px;
     }
 
     .creatorCredit,
     .creatorLink {
-        min-height: 18px;
+        min-height: 13px;
     }
 
     .packGroups {
@@ -839,6 +867,13 @@ button:disabled {
         --footer-block: 24px;
         --row-gap: 2px;
         --row-padding-y: 0px;
+        --separator-width: 0.5px;
+        --cell-border-width: 0.5px;
+        --selected-cell-ring-width: 0.75px;
+        --selected-cell-outer-ring-width: 0.5px;
+        --selected-cell-glow-size: 3px;
+        --selected-row-ring-width: 0.5px;
+        --selected-row-glow-size: 3px;
         --row-radius: 3px;
         --cell-radius: 2px;
         --button-radius: 2px;
@@ -862,30 +897,32 @@ button:disabled {
     }
 
     .appHeader h1 {
-        font-size: 0.72rem;
+        font-size: 0.46rem;
+        line-height: 0.95;
     }
 
     .appHeader p {
-        font-size: 0.55rem;
+        font-size: 0.34rem;
+        line-height: 0.95;
     }
 
     .creatorCredit {
-        gap: 4px;
+        gap: 2px;
     }
 
     .creatorBadge {
-        margin-right: 4px;
+        margin-right: 2px;
     }
 
     .creatorBadge,
     .creatorBadgeIcon {
-        width: 12px;
-        height: 12px;
+        width: 9px;
+        height: 9px;
     }
 
     .creatorCredit,
     .creatorLink {
-        min-height: 14px;
+        min-height: 9px;
     }
 
     .packGroups {
@@ -899,7 +936,7 @@ button:disabled {
     }
 
     .packGroup.isSelected {
-        box-shadow: inset 0 0 0 1px rgba(244, 193, 93, 0.55);
+        box-shadow: inset 0 0 0 var(--selected-row-ring-width) rgba(244, 193, 93, 0.55);
     }
 
     .showEnemies .enemyPanel {
@@ -942,8 +979,13 @@ button:disabled {
         height: 16px;
         min-height: 16px;
         padding: 0 3px;
-        font-size: 0.5rem;
-        line-height: 1;
+        white-space: normal;
+        font-size: 0.34rem;
+        line-height: 0.9;
+    }
+
+    #toggleEnemiesButton {
+        font-size: 0.3rem;
     }
 
     .controlsPanel {
