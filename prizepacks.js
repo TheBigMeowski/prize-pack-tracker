@@ -328,6 +328,25 @@ function getPixelValue(value){
     return Number.isFinite(parsedValue) ? parsedValue : 0;
 }
 
+function getResolvedCssLength(element, propertyName){
+    const rawValue = window.getComputedStyle(element).getPropertyValue(propertyName).trim();
+
+    if (!rawValue) return 0;
+    if (/^-?\d*\.?\d+px$/.test(rawValue)) return getPixelValue(rawValue);
+
+    const probe = document.createElement("div");
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    probe.style.pointerEvents = "none";
+    probe.style.width = rawValue;
+    document.body.appendChild(probe);
+
+    const resolvedValue = getPixelValue(window.getComputedStyle(probe).width);
+    probe.remove();
+
+    return resolvedValue;
+}
+
 function getEnemyPanelContentBox(panel){
     const styles = window.getComputedStyle(panel);
 
@@ -348,38 +367,92 @@ function getEnemyPanelGap(panel){
     };
 }
 
-function getBestEnemySpriteSize(panel){
+function getEnemySpriteDefaultSize(panel){
+    return getResolvedCssLength(panel, "--enemy-size");
+}
+
+function getEnemySpriteOneRowSize(panel){
+    return getResolvedCssLength(panel, "--enemy-one-row-size");
+}
+
+function getEnemySizeForColumns(contentBox, gap, columns, rows){
+    const widthForSprite = (contentBox.width - (gap.column * (columns - 1))) / columns;
+    const heightForSprite = (contentBox.height - (gap.row * (rows - 1))) / rows;
+
+    return Math.max(1, Math.floor(Math.min(widthForSprite, heightForSprite)));
+}
+
+function getBestEnemyLayout(panel){
     const enemyCount = panel.children.length;
     const contentBox = getEnemyPanelContentBox(panel);
 
     if (!enemyCount || contentBox.width <= 0 || contentBox.height <= 0) return null;
 
     const gap = getEnemyPanelGap(panel);
-    let bestSize = 0;
-    const minimumColumns = Math.ceil(enemyCount / 2);
+    const defaultSize = getEnemySpriteDefaultSize(panel);
+    const oneRowSize = getEnemySpriteOneRowSize(panel) || defaultSize;
 
-    for (let columns = minimumColumns; columns <= enemyCount; columns += 1) {
-        const rows = Math.ceil(enemyCount / columns);
-        const widthForSprite = (contentBox.width - (gap.column * (columns - 1))) / columns;
-        const heightForSprite = (contentBox.height - (gap.row * (rows - 1))) / rows;
-        const candidateSize = Math.min(widthForSprite, heightForSprite);
+    if (defaultSize <= 0) return null;
 
-        if (candidateSize > bestSize) bestSize = candidateSize;
+    const oneRowFitSize = getEnemySizeForColumns(contentBox, gap, enemyCount, 1);
+
+    if (oneRowFitSize >= defaultSize) {
+        return {
+            columns: enemyCount,
+            lastRowOffset: 0,
+            size: Math.min(oneRowSize, oneRowFitSize),
+        };
     }
 
-    return Math.max(1, Math.floor(bestSize));
+    const twoRowColumns = Math.ceil(enemyCount / 2);
+    const secondRowCount = enemyCount - twoRowColumns;
+    const twoRowSize = getEnemySizeForColumns(contentBox, gap, twoRowColumns, 2);
+    const fittedTwoRowSize = defaultSize ? Math.min(defaultSize, twoRowSize) : twoRowSize;
+    const lastRowOffset = secondRowCount > 0 && secondRowCount < twoRowColumns
+        ? (fittedTwoRowSize + gap.column) / 2
+        : 0;
+
+    return {
+        columns: twoRowColumns,
+        lastRowOffset,
+        size: fittedTwoRowSize,
+    };
+}
+
+function resetEnemySpriteOffsets(panel){
+    Array.from(panel.children).forEach((sprite) => {
+        sprite.style.removeProperty("transform");
+    });
+}
+
+function offsetEnemyPanelLastRow(panel, layout){
+    resetEnemySpriteOffsets(panel);
+
+    if (!layout.lastRowOffset) return;
+
+    Array.from(panel.children)
+        .slice(layout.columns)
+        .forEach((sprite) => {
+            sprite.style.transform = `translateX(${layout.lastRowOffset}px)`;
+        });
 }
 
 function updateEnemySpriteSizes(){
     document.querySelectorAll(".enemyPanel").forEach((panel) => {
-        const fittedSize = getBestEnemySpriteSize(panel);
+        const layout = getBestEnemyLayout(panel);
 
-        if (!fittedSize) {
+        if (!layout) {
             panel.style.removeProperty("--fitted-enemy-size");
+            panel.style.removeProperty("grid-template-columns");
+            panel.style.removeProperty("grid-auto-rows");
+            resetEnemySpriteOffsets(panel);
             return;
         }
 
-        panel.style.setProperty("--fitted-enemy-size", `${fittedSize}px`);
+        panel.style.setProperty("--fitted-enemy-size", `${layout.size}px`);
+        panel.style.gridTemplateColumns = `repeat(${layout.columns}, ${layout.size}px)`;
+        panel.style.gridAutoRows = `${layout.size}px`;
+        offsetEnemyPanelLastRow(panel, layout);
     });
 }
 
