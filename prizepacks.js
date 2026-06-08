@@ -274,6 +274,18 @@ function preventMouseFocus(event){
     event.preventDefault();
 }
 
+function hideSelectedPrizePack(){
+    showSelectedPrizePack = false;
+    document.querySelector(".packGroup.isSelected")?.classList.remove("isSelected");
+}
+
+function handleDocumentMouseDown(event){
+    if (event.button !== 0) return;
+    if (event.target instanceof Element && event.target.closest(".footerActions button")) return;
+
+    hideSelectedPrizePack();
+}
+
 function formatPackName(label){
     return label
         .split(" ")
@@ -537,9 +549,9 @@ function selectPrizePack(index, shouldShowSelection = showSelectedPrizePack){
 
     document.querySelector(`[data-pack-id="${previousPack.id}"]`)?.classList.remove("isSelected");
     selectedPrizePackIndex = normalizedIndex;
+    showSelectedPrizePack = shouldShowSelection;
 
     if (shouldShowSelection) {
-        showSelectedPrizePack = true;
         document.querySelector(`[data-pack-id="${nextPack.id}"]`)?.classList.add("isSelected");
     }
 }
@@ -994,6 +1006,7 @@ document.addEventListener("DOMContentLoaded", function() {
     footerButtons[0].addEventListener("click", resetTables);
     footerButtons[1].addEventListener("click", toggleEnemyPanels);
     footerButtons[2].addEventListener("click", toggleControls);
+    document.addEventListener("mousedown", handleDocumentMouseDown);
     document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleKeyboardControls);
     syncMobileEnemyState();
