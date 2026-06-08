@@ -24,6 +24,10 @@
     --footer-block: 54px;
     --row-gap: clamp(4px, 0.8vh, 10px);
     --row-padding-y: clamp(5px, 0.8vh, 8px);
+    --row-radius: 8px;
+    --cell-radius: 6px;
+    --button-radius: 6px;
+    --enemy-panel-radius: 6px;
     --available-row-content-height: calc((100dvh - (var(--app-padding-y) * 2) - (var(--app-gap) * 2) - var(--header-block) - var(--footer-block) - (var(--row-gap) * 6) - (var(--row-padding-y) * 14)) / 7);
     --drop-size: clamp(12px, min(5.8vh, var(--available-row-content-height)), 72px);
     --enemy-size: clamp(24px, 4.2vh, 32px);
@@ -165,7 +169,7 @@ body {
     gap: clamp(8px, 1.4vw, 14px);
     padding: clamp(5px, 0.8vh, 8px);
     border: 1px solid #2d3239;
-    border-radius: 8px;
+    border-radius: var(--row-radius);
     background: var(--panel);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
@@ -205,7 +209,7 @@ body {
     display: none;
     gap: 4px 7px;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: var(--enemy-panel-radius);
     background: #17191c;
 }
 
@@ -251,7 +255,7 @@ td {
     height: var(--drop-size);
     contain: paint;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: var(--cell-radius);
     background: var(--cell);
     cursor: pointer;
     touch-action: manipulation;
@@ -295,7 +299,7 @@ button {
     height: var(--drop-size);
     min-height: var(--drop-size);
     border: 1px solid #7a6d50;
-    border-radius: 6px;
+    border-radius: var(--button-radius);
     background: var(--button);
     color: #171717;
     cursor: pointer;
@@ -726,6 +730,10 @@ button:disabled {
         --footer-block: 34px;
         --row-gap: 3px;
         --row-padding-y: 3px;
+        --row-radius: 5px;
+        --cell-radius: 4px;
+        --button-radius: 4px;
+        --enemy-panel-radius: 4px;
         --drop-size: clamp(18px, min(5.8vh, var(--available-row-content-height)), 40px);
         --enemy-size: clamp(14px, calc(var(--drop-size) * 0.7), 24px);
         --enemy-one-row-size: clamp(18px, calc(var(--drop-size) * 0.85), 30px);
@@ -830,7 +838,11 @@ button:disabled {
         --header-block: 18px;
         --footer-block: 24px;
         --row-gap: 2px;
-        --row-padding-y: 2px;
+        --row-padding-y: 0px;
+        --row-radius: 3px;
+        --cell-radius: 2px;
+        --button-radius: 2px;
+        --enemy-panel-radius: 2px;
         --drop-size: clamp(10px, min(5.8vh, var(--available-row-content-height)), 24px);
         --enemy-size: clamp(8px, calc(var(--drop-size) * 0.65), 16px);
         --enemy-one-row-size: clamp(10px, calc(var(--drop-size) * 0.8), 20px);
@@ -882,25 +894,40 @@ button:disabled {
     }
 
     .packGroup {
-        gap: 5px;
-        padding: 2px;
-        border-radius: 5px;
+        gap: 3px;
+        padding: 1px 2px;
+    }
+
+    .packGroup.isSelected {
+        box-shadow: inset 0 0 0 1px rgba(244, 193, 93, 0.55);
+    }
+
+    .showEnemies .enemyPanel {
+        height: calc(100% - 2px);
+        max-height: calc(100% - 2px);
+        padding: 1px 2px;
     }
 
     table {
-        border-spacing: 2px;
-    }
-
-    .packCell {
-        border-radius: 4px;
-    }
-
-    .packCell.isCurrent {
-        box-shadow: inset 0 0 0 1px var(--gold), 0 0 0 1px rgba(0, 0, 0, 0.75);
+        border-spacing: 1px;
     }
 
     .packGroup button {
-        font-size: 0.8rem;
+        display: grid;
+        place-items: center;
+        width: var(--drop-size);
+        height: var(--drop-size);
+        min-height: var(--drop-size);
+        overflow: hidden;
+        padding: 0;
+        box-shadow: none;
+        font-size: clamp(0.45rem, calc(var(--drop-size) * 0.55), 0.68rem);
+        line-height: 1;
+        text-align: center;
+    }
+
+    .packGroup button:hover {
+        transform: none;
     }
 
     .appFooter {
