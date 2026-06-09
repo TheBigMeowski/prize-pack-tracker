@@ -620,12 +620,7 @@ function setTrackerMode(nextMode){
     closeRandoEnemyMenu();
     updateModeSwitch();
 
-    if (trackerMode === "rando") {
-        setEnemyPanelsVisible(true);
-    } else {
-        setEnemyPanelsVisible(app.classList.contains("showEnemies"));
-    }
-
+    syncMobileEnemyState();
     refreshEnemyPanels();
 }
 
@@ -927,6 +922,9 @@ function toggleEnemyPanels(){
 function renderControlsMenu(){
     const controlsList = document.getElementById("controlsList");
     controlsList.replaceChildren();
+    controlsList.hidden = !shouldShowHotkeySettings();
+
+    if (controlsList.hidden) return;
 
     getActiveKeyBindings().forEach((binding) => {
         const action = document.createElement("div");
@@ -950,6 +948,10 @@ function renderControlsMenu(){
     });
 
     controlsList.append(createResetControlsButton());
+}
+
+function shouldShowHotkeySettings(){
+    return !window.matchMedia("(pointer: coarse)").matches;
 }
 
 function getBindingActionLabel(binding){
@@ -1208,7 +1210,6 @@ function setControlsVisible(shouldShowControls){
 }
 
 function toggleControls(){
-    if (window.matchMedia("(pointer: coarse)").matches) return;
     setControlsVisible(!document.querySelector(".app").classList.contains("showControls"));
 }
 
@@ -1364,14 +1365,10 @@ function handleKeyboardControls(event){
 }
 
 function syncMobileEnemyState(){
-    const mobilePortrait = window.matchMedia("(pointer: coarse) and (orientation: portrait)").matches;
-    const mobileLandscape = window.matchMedia("(pointer: coarse) and (orientation: landscape)").matches;
-    const mobileControlsHidden = window.matchMedia("(pointer: coarse)").matches;
+    const mobileInput = window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+    const mobilePortrait = mobileInput && window.matchMedia("(orientation: portrait)").matches;
+    const mobileLandscape = mobileInput && window.matchMedia("(orientation: landscape)").matches;
     const toggleButton = document.getElementById("toggleEnemiesButton");
-
-    if (mobileControlsHidden && document.querySelector(".app").classList.contains("showControls")) {
-        setControlsVisible(false);
-    }
 
     if (trackerMode === "rando") {
         toggleButton.disabled = false;
@@ -1401,6 +1398,7 @@ function syncMobileEnemyState(){
 
 function handleViewportChange(){
     syncMobileEnemyState();
+    renderControlsMenu();
     scheduleEnemySpriteSizeUpdate();
 }
 
