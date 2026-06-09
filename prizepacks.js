@@ -141,7 +141,24 @@ const utilityKeyBindings = [
     {id:"toggleEnemies", action:"Toggle Enemies", key:null, label:"None"},
 ];
 
+const randoCoreKeyBindings = [
+    {id:"randoSelectPrevious", action:"Select Previous Enemy Group", key:"ArrowUp", label:"Up Arrow"},
+    {id:"randoSelectNext", action:"Select Next Enemy Group", key:"ArrowDown", label:"Down Arrow"},
+    {id:"randoOpenEnemyMenu", action:"Open Enemy Group Menu", key:"ArrowRight", label:"Right Arrow"},
+    {id:"randoCloseEnemyMenu", action:"Close Enemy Group Menu", key:"ArrowLeft", label:"Left Arrow"},
+    {id:"randoResetTracker", action:"Reset", key:null, label:"None"},
+    {id:"randoClearSelectedEnemyGroup", action:"Clear Selected Enemy Group", key:"0", label:"0"},
+];
+
 const controlsStorageKey = "prizePackTracker.controls.v2";
+const trackerModes = {
+    speedrun: {
+        title:"ALTTP Prize Pack Tracker",
+    },
+    rando: {
+        title:"ALTTPR Prize Pack Tracker",
+    },
+};
 const defaultBindings = new Map();
 
 const selectPackBindings = prizePacks.map((pack, index) => ({
@@ -181,9 +198,19 @@ const eitherIncrementPackBindings = prizePacks.map((pack, index) => ({
     behavior:"selectAndIncrement",
 }));
 
+const randoEnemyGroupBindings = prizePacks.map((pack, index) => ({
+    id:`randoEnemyGroup${index + 1}`,
+    action:`Change to Enemy Group ${index + 1}`,
+    key:String(index + 1),
+    label:String(index + 1),
+    enemyGroupIndex:index,
+}));
+
 [
     ...coreKeyBindings,
     ...utilityKeyBindings,
+    ...randoCoreKeyBindings,
+    ...randoEnemyGroupBindings,
     ...selectPackBindings,
     ...selectAndIncrementPackBindings,
     ...eitherSelectPackBindings,
@@ -220,6 +247,8 @@ function getAllKeyBindings(){
     return [
         ...coreKeyBindings,
         ...utilityKeyBindings,
+        ...randoCoreKeyBindings,
+        ...randoEnemyGroupBindings,
         ...selectPackBindings,
         ...selectAndIncrementPackBindings,
         ...eitherSelectPackBindings,
@@ -228,6 +257,13 @@ function getAllKeyBindings(){
 }
 
 function getActiveKeyBindings(){
+    if (trackerMode === "rando") {
+        return [
+            ...randoCoreKeyBindings,
+            ...randoEnemyGroupBindings,
+        ];
+    }
+
     return [
         ...coreKeyBindings,
         ...utilityKeyBindings,
@@ -262,10 +298,19 @@ let showSelectedPrizePack = false;
 let pendingRebindId = null;
 let controlsCloseTimer = null;
 let enemyPanelResizeObserver = null;
+let trackerMode = getInitialTrackerMode();
+let activeRandoEnemyRow = null;
+let selectedRandoMenuOptionIndex = 0;
+const randoEnemyAssignments = Array(prizePacks.length).fill(null);
 
 prizePacks.forEach((pack) => {
     pack.enemies = enemyPrizePacks[pack.id];
 });
+
+function getInitialTrackerMode(){
+    const mode = new URLSearchParams(window.location.search).get("mode");
+    return trackerModes[mode] ? mode : "speedrun";
+}
 
 function preventMouseFocus(event){
     if (event.button !== 0) return;
@@ -277,11 +322,15 @@ function preventMouseFocus(event){
 function hideSelectedPrizePack(){
     showSelectedPrizePack = false;
     document.querySelector(".packGroup.isSelected")?.classList.remove("isSelected");
+    if (trackerMode === "rando") {
+        refreshEnemyPanels();
+    }
 }
 
 function handleDocumentMouseDown(event){
     if (event.button !== 0) return;
     if (event.target instanceof Element && event.target.closest(".footerActions button")) return;
+    if (event.target instanceof Element && event.target.closest(".enemyPanel, .randoEnemyMenu")) return;
 
     hideSelectedPrizePack();
 }
@@ -311,12 +360,16 @@ function createPackTable(prizePack){
         cell.addEventListener("mousedown", preventMouseFocus);
         cell.addEventListener("click", (event) => {
             event.stopPropagation();
+            if (trackerMode === "rando") return;
+
             selectPrizePack(prizePacks.indexOf(prizePack));
             updatePackTable(prizePack, i);
         });
         cell.addEventListener("keydown", (event) => {
             if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
+                if (trackerMode === "rando") return;
+
                 updatePackTable(prizePack, i);
             }
         });
@@ -330,17 +383,287 @@ function createPackTable(prizePack){
 function createEnemyPanel(prizePack){
     const enemySprites = document.createElement("div");
     enemySprites.className = "enemyPanel";
+    enemySprites.dataset.packId = prizePack.id;
+    enemySprites.dataset.rowIndex = String(prizePacks.indexOf(prizePack));
     enemySprites.setAttribute("aria-label", `Enemies for ${prizePack.label} prize pack`);
+    enemySprites.setAttribute("role", "button");
+    enemySprites.tabIndex = -1;
 
-    prizePack.enemies.forEach((enemy) => {
-        const sprite = document.createElement("img");
-        sprite.src = enemy.img;
-        sprite.alt = enemy.name;
-        sprite.loading = "lazy";
-        enemySprites.appendChild(sprite);
+    renderEnemyPanel(enemySprites, prizePack);
+
+    enemySprites.addEventListener("mousedown", preventMouseFocus);
+    enemySprites.addEventListener("click", (event) => {
+        if (trackerMode !== "rando") return;
+
+        event.stopPropagation();
+        const rowIndex = Number(enemySprites.dataset.rowIndex);
+        selectPrizePack(rowIndex, true);
+        toggleRandoEnemyMenu(rowIndex);
+    });
+    enemySprites.addEventListener("keydown", (event) => {
+        if (trackerMode !== "rando" || (event.key !== "Enter" && event.key !== " ")) return;
+
+        event.preventDefault();
+        const rowIndex = Number(enemySprites.dataset.rowIndex);
+        selectPrizePack(rowIndex, true);
+        toggleRandoEnemyMenu(rowIndex);
     });
 
     return enemySprites;
+}
+
+function createEnemyImage(enemy){
+    const sprite = document.createElement("img");
+    sprite.src = enemy.img;
+    sprite.alt = enemy.name;
+    sprite.loading = "lazy";
+    return sprite;
+}
+
+function renderEnemyGroup(panel, enemies){
+    enemies.forEach((enemy) => {
+        panel.appendChild(createEnemyImage(enemy));
+    });
+}
+
+function renderEnemyPanel(panel, prizePack){
+    panel.replaceChildren();
+
+    const rowIndex = Number(panel.dataset.rowIndex);
+    if (trackerMode === "rando") {
+        const assignedPackId = randoEnemyAssignments[rowIndex];
+        panel.classList.toggle("isUnknown", !assignedPackId);
+        panel.tabIndex = 0;
+        panel.setAttribute("aria-pressed", (showSelectedPrizePack && selectedPrizePackIndex === rowIndex).toString());
+
+        if (!assignedPackId) {
+            const unknown = document.createElement("span");
+            unknown.className = "enemyUnknown";
+            unknown.textContent = "?";
+            panel.appendChild(unknown);
+            return;
+        }
+
+        renderEnemyGroup(panel, enemyPrizePacks[assignedPackId]);
+        return;
+    }
+
+    panel.classList.remove("isUnknown");
+    panel.removeAttribute("aria-pressed");
+    panel.tabIndex = -1;
+    renderEnemyGroup(panel, prizePack.enemies);
+}
+
+function refreshEnemyPanels(){
+    document.querySelectorAll(".enemyPanel").forEach((panel) => {
+        const prizePack = prizePacks.find((pack) => pack.id === panel.dataset.packId);
+        if (!prizePack) return;
+
+        renderEnemyPanel(panel, prizePack);
+    });
+    scheduleEnemySpriteSizeUpdate();
+}
+
+function createRandoEnemyMenu(){
+    const menu = document.createElement("div");
+    menu.id = "randoEnemyMenu";
+    menu.className = "randoEnemyMenu";
+    menu.setAttribute("aria-label", "Choose enemy group");
+    menu.setAttribute("aria-hidden", "true");
+
+    const unknownOption = document.createElement("button");
+    unknownOption.type = "button";
+    unknownOption.className = "randoEnemyOption isUnknown";
+    unknownOption.dataset.optionIndex = "0";
+    unknownOption.setAttribute("aria-label", "Assign unknown enemy group");
+    unknownOption.addEventListener("mousedown", preventMouseFocus);
+        unknownOption.addEventListener("click", (event) => {
+        event.stopPropagation();
+        selectedRandoMenuOptionIndex = 0;
+        closeRandoEnemyMenu();
+        hideSelectedPrizePack();
+    });
+
+    const unknown = document.createElement("span");
+    unknown.className = "enemyUnknown";
+    unknown.textContent = "?";
+    unknownOption.appendChild(unknown);
+    menu.appendChild(unknownOption);
+
+    prizePacks.forEach((pack, index) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "randoEnemyOption";
+        option.dataset.packId = pack.id;
+        option.dataset.optionIndex = String(index + 1);
+        option.setAttribute("aria-label", `Assign ${formatPackName(pack.label)} enemy group`);
+        option.addEventListener("mousedown", preventMouseFocus);
+        option.addEventListener("click", (event) => {
+            event.stopPropagation();
+            selectedRandoMenuOptionIndex = index + 1;
+            closeRandoEnemyMenu();
+            hideSelectedPrizePack();
+        });
+
+        renderEnemyGroup(option, pack.enemies);
+        menu.appendChild(option);
+    });
+
+    return menu;
+}
+
+function toggleRandoEnemyMenu(rowIndex){
+    if (activeRandoEnemyRow === rowIndex) {
+        closeRandoEnemyMenu(false);
+        hideSelectedPrizePack();
+        return;
+    }
+
+    openRandoEnemyMenu(rowIndex);
+}
+
+function openRandoEnemyMenu(rowIndex){
+    activeRandoEnemyRow = rowIndex;
+    selectedRandoMenuOptionIndex = getRandoMenuOptionIndexForRow(rowIndex);
+    const menu = document.getElementById("randoEnemyMenu");
+    menu?.classList.add("isOpen");
+    menu?.setAttribute("aria-hidden", "false");
+    refreshEnemyPanels();
+    renderRandoEnemyMenu();
+}
+
+function getRandoMenuOptionIndexForRow(rowIndex){
+    const assignedPackId = randoEnemyAssignments[rowIndex];
+    if (!assignedPackId) return 0;
+
+    const packIndex = prizePacks.findIndex((pack) => pack.id === assignedPackId);
+    return packIndex === -1 ? 0 : packIndex + 1;
+}
+
+function closeRandoEnemyMenu(shouldCommitSelection = true){
+    if (activeRandoEnemyRow === null) return;
+
+    if (shouldCommitSelection) {
+        commitRandoEnemyMenuSelection();
+    }
+    activeRandoEnemyRow = null;
+    const menu = document.getElementById("randoEnemyMenu");
+    menu?.classList.remove("isOpen");
+    menu?.setAttribute("aria-hidden", "true");
+    refreshEnemyPanels();
+}
+
+function commitRandoEnemyMenuSelection(){
+    if (activeRandoEnemyRow === null) return;
+
+    if (selectedRandoMenuOptionIndex === 0) {
+        randoEnemyAssignments[activeRandoEnemyRow] = null;
+        return;
+    }
+
+    assignRandoEnemyGroupToRow(activeRandoEnemyRow, selectedRandoMenuOptionIndex - 1);
+}
+
+function selectPreviousRandoMenuGroup(){
+    selectedRandoMenuOptionIndex = (selectedRandoMenuOptionIndex + prizePacks.length) % (prizePacks.length + 1);
+    renderRandoEnemyMenu();
+}
+
+function selectNextRandoMenuGroup(){
+    selectedRandoMenuOptionIndex = (selectedRandoMenuOptionIndex + 1) % (prizePacks.length + 1);
+    renderRandoEnemyMenu();
+}
+
+function assignRandoEnemyGroupToRow(rowIndex, enemyGroupIndex){
+    const assignedPackId = prizePacks[enemyGroupIndex].id;
+    const previousRow = randoEnemyAssignments.findIndex((packId) => packId === assignedPackId);
+
+    if (previousRow !== -1 && previousRow !== rowIndex) {
+        randoEnemyAssignments[previousRow] = null;
+    }
+
+    randoEnemyAssignments[rowIndex] = assignedPackId;
+    refreshEnemyPanels();
+    renderRandoEnemyMenu();
+}
+
+function resetRandoEnemyAssignments(){
+    randoEnemyAssignments.fill(null);
+    closeRandoEnemyMenu(false);
+    refreshEnemyPanels();
+    renderRandoEnemyMenu();
+}
+
+function clearSelectedRandoEnemyGroup(){
+    randoEnemyAssignments[selectedPrizePackIndex] = null;
+    closeRandoEnemyMenu(false);
+    refreshEnemyPanels();
+    renderRandoEnemyMenu();
+}
+
+function updateModeSwitch(){
+    document.querySelectorAll(".modeSwitchButton").forEach((button) => {
+        const isActive = button.dataset.mode === trackerMode;
+        button.setAttribute("aria-pressed", isActive.toString());
+    });
+}
+
+function setTrackerMode(nextMode){
+    if (!trackerModes[nextMode]) return;
+
+    trackerMode = nextMode;
+    const app = document.querySelector(".app");
+    const title = trackerModes[trackerMode].title;
+    app.classList.toggle("randoMode", trackerMode === "rando");
+    document.title = `${title} by Meowski`;
+    document.getElementById("appTitle").textContent = title;
+    closeRandoEnemyMenu();
+    updateModeSwitch();
+
+    if (trackerMode === "rando") {
+        setEnemyPanelsVisible(true);
+    } else {
+        setEnemyPanelsVisible(app.classList.contains("showEnemies"));
+    }
+
+    refreshEnemyPanels();
+}
+
+function bindModeSwitch(){
+    document.querySelectorAll(".modeSwitchButton").forEach((button) => {
+        button.addEventListener("mousedown", preventMouseFocus);
+        button.addEventListener("click", () => setTrackerMode(button.dataset.mode));
+    });
+}
+
+function handleRandoDocumentClick(event){
+    if (trackerMode !== "rando" || activeRandoEnemyRow === null) return;
+    if (event.target instanceof Element && event.target.closest(".enemyPanel, .randoEnemyMenu")) return;
+
+    closeRandoEnemyMenu(false);
+}
+
+function handleRandoDocumentKeydown(event){
+    if (event.key !== "Escape" || trackerMode !== "rando" || activeRandoEnemyRow === null) return false;
+
+    closeRandoEnemyMenu();
+    return true;
+}
+
+function syncRandoMenuHighlights(){
+    const menu = document.getElementById("randoEnemyMenu");
+    if (!menu) return;
+
+    menu.querySelectorAll(".randoEnemyOption").forEach((option) => {
+        const optionIndex = Number(option.dataset.optionIndex);
+        option.classList.toggle("isAssigned", randoEnemyAssignments.includes(option.dataset.packId));
+        option.classList.toggle("isSelected", activeRandoEnemyRow !== null && optionIndex === selectedRandoMenuOptionIndex);
+        option.setAttribute("aria-current", activeRandoEnemyRow !== null && optionIndex === selectedRandoMenuOptionIndex ? "true" : "false");
+    });
+}
+
+function renderRandoEnemyMenu(){
+    syncRandoMenuHighlights();
 }
 
 function getPixelValue(value){
@@ -458,7 +781,7 @@ function offsetEnemyPanelLastRow(panel, layout){
 }
 
 function updateEnemySpriteSizes(){
-    document.querySelectorAll(".enemyPanel").forEach((panel) => {
+    document.querySelectorAll(".enemyPanel, .randoEnemyOption").forEach((panel) => {
         const layout = getBestEnemyLayout(panel);
 
         if (!layout) {
@@ -497,6 +820,8 @@ function incrementPackTable(pack){
 }
 
 function incrementPackFromButton(pack){
+    if (trackerMode === "rando") return;
+
     selectPrizePack(prizePacks.indexOf(pack));
     incrementPackTable(pack);
 }
@@ -554,6 +879,10 @@ function selectPrizePack(index, shouldShowSelection = showSelectedPrizePack){
     if (shouldShowSelection) {
         document.querySelector(`[data-pack-id="${nextPack.id}"]`)?.classList.add("isSelected");
     }
+
+    if (trackerMode === "rando") {
+        refreshEnemyPanels();
+    }
 }
 
 function getSelectedPrizePack(){
@@ -564,14 +893,24 @@ function resetTables(){
     prizePacks.forEach((pack) => updatePackTable(pack, 0));
 }
 
+function resetTracker(){
+    if (trackerMode === "rando") {
+        resetRandoEnemyAssignments();
+        return;
+    }
+
+    resetTables();
+}
+
 function setEnemyPanelsVisible(shouldShowEnemies){
     const app = document.querySelector(".app");
-    app.classList.toggle("showEnemies", shouldShowEnemies);
+    const nextShowEnemies = trackerMode === "rando" ? true : shouldShowEnemies;
+    app.classList.toggle("showEnemies", nextShowEnemies);
     scheduleEnemySpriteSizeUpdate();
 
     const toggleButton = document.getElementById("toggleEnemiesButton");
-    toggleButton.textContent = shouldShowEnemies ? "Hide Enemies" : "Show Enemies";
-    toggleButton.setAttribute("aria-pressed", shouldShowEnemies.toString());
+    toggleButton.textContent = nextShowEnemies ? "Hide Enemies" : "Show Enemies";
+    toggleButton.setAttribute("aria-pressed", nextShowEnemies.toString());
 
     if (app.classList.contains("showControls")) {
         renderControlsMenu();
@@ -579,6 +918,8 @@ function setEnemyPanelsVisible(shouldShowEnemies){
 }
 
 function toggleEnemyPanels(){
+    if (trackerMode === "rando") return;
+
     const shouldShowEnemies = !document.querySelector(".app").classList.contains("showEnemies");
     setEnemyPanelsVisible(shouldShowEnemies);
 }
@@ -761,6 +1102,11 @@ function sanitizeControlBindings(){
             ...selectionModes[mode].bindings,
         ]);
     });
+
+    removeDuplicateKeys([
+        ...randoCoreKeyBindings,
+        ...randoEnemyGroupBindings,
+    ]);
 }
 
 function loadControlsSettings(){
@@ -867,6 +1213,8 @@ function toggleControls(){
 }
 
 function handleDocumentClick(event){
+    handleRandoDocumentClick(event);
+
     if (!document.querySelector(".app").classList.contains("showControls")) return;
 
     const controlsPanel = document.getElementById("controlsPanel");
@@ -886,6 +1234,11 @@ function handleDocumentClick(event){
 function handleKeyboardControls(event){
     const activeBindings = getActiveKeyBindings();
 
+    if (handleRandoDocumentKeydown(event)) {
+        event.preventDefault();
+        return;
+    }
+
     if (rebindControl(event)) {
         event.preventDefault();
         return;
@@ -897,6 +1250,71 @@ function handleKeyboardControls(event){
     }
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
 
+    if (trackerMode === "rando") {
+        const enemyGroupBinding = activeBindings.find((binding) => binding.key && binding.key === event.key && binding.enemyGroupIndex !== undefined);
+        if (enemyGroupBinding) {
+            event.preventDefault();
+            revealSelectedPrizePack();
+            if (activeRandoEnemyRow !== null) {
+                selectedRandoMenuOptionIndex = enemyGroupBinding.enemyGroupIndex + 1;
+                closeRandoEnemyMenu();
+                return;
+            }
+
+            assignRandoEnemyGroupToRow(selectedPrizePackIndex, enemyGroupBinding.enemyGroupIndex);
+            return;
+        }
+
+        if (event.key === activeBindings.find((binding) => binding.id === "randoSelectPrevious")?.key) {
+            event.preventDefault();
+            if (activeRandoEnemyRow !== null) {
+                selectPreviousRandoMenuGroup();
+                return;
+            }
+
+            selectPrizePack(selectedPrizePackIndex - 1, true);
+            return;
+        }
+
+        if (event.key === activeBindings.find((binding) => binding.id === "randoSelectNext")?.key) {
+            event.preventDefault();
+            if (activeRandoEnemyRow !== null) {
+                selectNextRandoMenuGroup();
+                return;
+            }
+
+            selectPrizePack(selectedPrizePackIndex + 1, true);
+            return;
+        }
+
+        if (event.key === activeBindings.find((binding) => binding.id === "randoOpenEnemyMenu")?.key) {
+            event.preventDefault();
+            revealSelectedPrizePack();
+            toggleRandoEnemyMenu(selectedPrizePackIndex);
+            return;
+        }
+
+        if (event.key === activeBindings.find((binding) => binding.id === "randoCloseEnemyMenu")?.key) {
+            event.preventDefault();
+            closeRandoEnemyMenu();
+            return;
+        }
+
+        if (event.key === activeBindings.find((binding) => binding.id === "randoResetTracker")?.key) {
+            event.preventDefault();
+            resetRandoEnemyAssignments();
+            return;
+        }
+
+        if (event.key === activeBindings.find((binding) => binding.id === "randoClearSelectedEnemyGroup")?.key) {
+            event.preventDefault();
+            clearSelectedRandoEnemyGroup();
+            return;
+        }
+
+        return;
+    }
+
     const packBinding = activeBindings.find((binding) => binding.key && binding.key === event.key && binding.packIndex !== undefined);
     if (packBinding) {
         event.preventDefault();
@@ -907,39 +1325,39 @@ function handleKeyboardControls(event){
         return;
     }
 
-    if (event.key === activeBindings.find((binding) => binding.id === "selectPrevious").key) {
+    if (event.key === activeBindings.find((binding) => binding.id === "selectPrevious")?.key) {
         event.preventDefault();
         selectPrizePack(selectedPrizePackIndex - 1, true);
         return;
     }
 
-    if (event.key === activeBindings.find((binding) => binding.id === "selectNext").key) {
+    if (event.key === activeBindings.find((binding) => binding.id === "selectNext")?.key) {
         event.preventDefault();
         selectPrizePack(selectedPrizePackIndex + 1, true);
         return;
     }
 
-    if (event.key === activeBindings.find((binding) => binding.id === "incrementCounter").key) {
+    if (event.key === activeBindings.find((binding) => binding.id === "incrementCounter")?.key) {
         event.preventDefault();
         revealSelectedPrizePack();
         incrementPackTable(getSelectedPrizePack());
         return;
     }
 
-    if (event.key === activeBindings.find((binding) => binding.id === "decrementCounter").key) {
+    if (event.key === activeBindings.find((binding) => binding.id === "decrementCounter")?.key) {
         event.preventDefault();
         revealSelectedPrizePack();
         decrementPackTable(getSelectedPrizePack());
         return;
     }
 
-    if (event.key === activeBindings.find((binding) => binding.id === "resetTracker").key) {
+    if (event.key === activeBindings.find((binding) => binding.id === "resetTracker")?.key) {
         event.preventDefault();
-        resetTables();
+        resetTracker();
         return;
     }
 
-    if (event.key === activeBindings.find((binding) => binding.id === "toggleEnemies").key) {
+    if (event.key === activeBindings.find((binding) => binding.id === "toggleEnemies")?.key) {
         event.preventDefault();
         toggleEnemyPanels();
     }
@@ -953,6 +1371,12 @@ function syncMobileEnemyState(){
 
     if (mobileControlsHidden && document.querySelector(".app").classList.contains("showControls")) {
         setControlsVisible(false);
+    }
+
+    if (trackerMode === "rando") {
+        toggleButton.disabled = false;
+        setEnemyPanelsVisible(true);
+        return;
     }
 
     if (mobilePortrait) {
@@ -981,6 +1405,8 @@ function handleViewportChange(){
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+    document.querySelector(".trackerStage").appendChild(createRandoEnemyMenu());
+
     prizePacks.forEach((pack) => {
         createPackTable(pack);
 
@@ -996,6 +1422,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     loadControlsSettings();
     renderControlsMenu();
+    bindModeSwitch();
     const footerButtons = [
         document.getElementById("resetButton"),
         document.getElementById("toggleEnemiesButton"),
@@ -1003,12 +1430,13 @@ document.addEventListener("DOMContentLoaded", function() {
     ];
 
     footerButtons.forEach((button) => button.addEventListener("mousedown", preventMouseFocus));
-    footerButtons[0].addEventListener("click", resetTables);
+    footerButtons[0].addEventListener("click", resetTracker);
     footerButtons[1].addEventListener("click", toggleEnemyPanels);
     footerButtons[2].addEventListener("click", toggleControls);
     document.addEventListener("mousedown", handleDocumentMouseDown);
     document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleKeyboardControls);
+    setTrackerMode(trackerMode);
     syncMobileEnemyState();
     scheduleEnemySpriteSizeUpdate();
     window.addEventListener("resize", handleViewportChange);

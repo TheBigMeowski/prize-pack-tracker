@@ -43,6 +43,7 @@
     --drop-table-width: calc((var(--drop-size) * 8) + 45px);
     --tracker-width: calc(var(--drop-table-width) + var(--drop-size) + 30px);
     --tracker-with-enemies-width: calc(var(--enemy-panel-width) + var(--tracker-width) + 14px);
+    --rando-tracker-with-enemies-width: calc(var(--enemy-panel-width) + var(--drop-table-width) + 14px);
 }
 
 body {
@@ -75,6 +76,15 @@ body {
 .app.showEnemies .appHeader,
 .app.showEnemies .appFooter {
     width: var(--tracker-with-enemies-width);
+}
+
+.app.randoMode.showEnemies {
+    min-width: var(--rando-tracker-with-enemies-width);
+}
+
+.app.randoMode.showEnemies .appHeader,
+.app.randoMode.showEnemies .appFooter {
+    width: var(--rando-tracker-with-enemies-width);
 }
 
 .appHeader {
@@ -186,8 +196,17 @@ body {
     box-shadow: inset 0 0 0 var(--selected-row-ring-width) rgba(244, 193, 93, 0.7), 0 0 var(--selected-row-glow-size) rgba(244, 193, 93, 0.12);
 }
 
+.randoMode .packGroup.isSelected {
+    border-color: #2d3239;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
 .showEnemies .packGroup {
     grid-template-columns: var(--enemy-panel-width) var(--drop-table-width) var(--drop-size);
+}
+
+.randoMode.showEnemies .packGroup {
+    grid-template-columns: var(--enemy-panel-width) var(--drop-table-width);
 }
 
 .packGroup > table {
@@ -204,6 +223,10 @@ body {
 
 .showEnemies .packGroup > button {
     grid-column: 3;
+}
+
+.randoMode .packGroup > button {
+    display: none;
 }
 
 .enemyPanel {
@@ -240,6 +263,112 @@ body {
     object-fit: contain;
     image-rendering: pixelated;
     vertical-align: middle;
+    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.14)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55));
+}
+
+.randoMode .enemyPanel {
+    cursor: pointer;
+}
+
+.randoMode .enemyPanel[aria-pressed="true"] {
+    border-color: var(--gold);
+    box-shadow: inset 0 0 0 1px rgba(244, 193, 93, 0.72), 0 0 16px rgba(244, 193, 93, 0.16);
+}
+
+.enemyPanel.isUnknown {
+    place-content: center;
+}
+
+.enemyUnknown {
+    color: var(--gold);
+    font-size: clamp(1.2rem, 4vh, 2.5rem);
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
+}
+
+.randoEnemyMenu {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--enemy-panel-width) + clamp(8px, 1.4vw, 14px));
+    right: 0;
+    z-index: 2;
+    width: auto;
+    display: grid;
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+    gap: clamp(5px, 0.85vh, 10px);
+    padding: clamp(5px, 0.8vh, 8px);
+    border: var(--separator-width) solid #2d3239;
+    border-radius: var(--row-radius);
+    background: rgba(23, 25, 28, 0.98);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 28px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-6px);
+    transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.randoEnemyMenu.isOpen {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+}
+
+.randoEnemyOption {
+    position: relative;
+    min-height: 0;
+    height: auto;
+    width: 100%;
+    overflow: hidden;
+    padding: clamp(3px, 0.55vh, 6px) clamp(5px, 0.8vh, 8px);
+    display: grid;
+    place-content: center;
+    place-items: center;
+    gap: 4px 7px;
+    border-color: var(--line-strong);
+    border-radius: var(--enemy-panel-radius);
+    background: #14171a;
+}
+
+.randoEnemyOption.isUnknown {
+    place-content: center;
+}
+
+.randoEnemyOption:hover {
+    background: #22262b;
+    transform: none;
+}
+
+.randoEnemyOption.isAssigned {
+    border-color: #4e6478;
+    background: #18212a;
+}
+
+.randoEnemyOption.isAssigned::after {
+    content: "";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: clamp(5px, 0.9vh, 8px);
+    height: clamp(5px, 0.9vh, 8px);
+    border-radius: 50%;
+    background: var(--blue);
+    box-shadow: 0 0 8px rgba(119, 181, 255, 0.45);
+}
+
+.randoEnemyOption.isSelected {
+    border-color: var(--gold);
+    box-shadow: inset 0 0 0 1px rgba(244, 193, 93, 0.72), 0 0 16px rgba(244, 193, 93, 0.16);
+}
+
+.randoEnemyOption img {
+    width: var(--fitted-enemy-size, var(--enemy-size));
+    height: var(--fitted-enemy-size, var(--enemy-size));
+    max-width: var(--fitted-enemy-size, var(--enemy-size));
+    max-height: var(--fitted-enemy-size, var(--enemy-size));
+    object-fit: contain;
+    image-rendering: pixelated;
     filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.14)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55));
 }
 
@@ -289,6 +418,21 @@ a:focus-visible {
     background: var(--accent-soft);
     border-color: var(--accent);
     box-shadow: inset 0 0 0 var(--selected-cell-ring-width) var(--gold), 0 0 0 var(--selected-cell-outer-ring-width) rgba(0, 0, 0, 0.75), 0 0 var(--selected-cell-glow-size) rgba(243, 91, 69, 0.26);
+}
+
+.randoMode .packCell {
+    cursor: default;
+}
+
+.randoMode .packCell.isCurrent {
+    background: var(--cell);
+    border-color: var(--line);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.randoMode .packCell:hover {
+    background: var(--cell);
+    border-color: var(--line);
 }
 
 .packCell img {
@@ -417,6 +561,52 @@ button:disabled {
     font-size: clamp(1rem, 2.6vh, 1.35rem);
     line-height: 1.1;
     text-align: center;
+}
+
+.modeSwitch {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(100%, 520px);
+    margin: 0 auto 2px;
+    padding: 4px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: #15171a;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.modeSwitchButton {
+    position: relative;
+    z-index: 1;
+    height: 48px;
+    min-height: 48px;
+    border-color: transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    box-shadow: none;
+    font-size: clamp(0.9rem, 2vh, 1.05rem);
+}
+
+.modeSwitchButton:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: none;
+}
+
+.modeSwitchButton[aria-pressed="true"] {
+    border-color: #7a6d50;
+    background: var(--button);
+    color: #171717;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 2px 5px rgba(0, 0, 0, 0.32);
+}
+
+.randoMode #toggleEnemiesButton {
+    display: none;
+}
+
+.randoMode .footerActions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .showControls .packGroups {
@@ -652,6 +842,15 @@ button:disabled {
         grid-template-columns: minmax(0, 1fr) var(--drop-size);
     }
 
+    .randoMode {
+        --drop-table-width: calc(100vw - 74px);
+        --enemy-panel-width: var(--drop-size);
+    }
+
+    .randoMode.showEnemies .packGroup {
+        grid-template-columns: var(--enemy-panel-width) minmax(0, 1fr);
+    }
+
     .showEnemies .packGroup > table {
         grid-column: 1;
         grid-row: 1;
@@ -662,15 +861,38 @@ button:disabled {
         grid-row: 1;
     }
 
+    .randoMode.showEnemies .packGroup > table {
+        grid-column: 2;
+    }
+
     .enemyPanel {
         grid-column: 1 / -1;
         grid-row: 2;
+    }
+
+    .randoMode .enemyPanel {
+        grid-column: 1;
+        grid-row: 1;
     }
 
     .showEnemies .enemyPanel {
         width: 100%;
         height: auto;
         min-height: var(--drop-size);
+    }
+
+    .randoMode.showEnemies .enemyPanel {
+        width: var(--enemy-panel-width);
+        height: var(--drop-size);
+        min-height: var(--drop-size);
+        padding: 2px;
+    }
+
+    .randoEnemyMenu {
+        left: calc(var(--enemy-panel-width) + 12px);
+        right: 0;
+        width: auto;
+        grid-template-rows: repeat(8, minmax(0, 1fr));
     }
 
     table {
@@ -708,6 +930,11 @@ button:disabled {
 
     .controlsPanel {
         padding: 8px;
+    }
+
+    .modeSwitchButton {
+        height: 42px;
+        min-height: 42px;
     }
 
     .controlsList {
@@ -818,6 +1045,10 @@ button:disabled {
 
     .showEnemies .packGroup {
         grid-template-columns: var(--enemy-panel-width) var(--drop-table-width) var(--drop-size);
+    }
+
+    .randoMode.showEnemies .packGroup {
+        grid-template-columns: var(--enemy-panel-width) var(--drop-table-width);
     }
 
     .packGroup button {
@@ -939,6 +1170,10 @@ button:disabled {
         box-shadow: inset 0 0 0 var(--selected-row-ring-width) rgba(244, 193, 93, 0.55);
     }
 
+    .randoMode .packGroup.isSelected {
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
     .showEnemies .enemyPanel {
         height: calc(100% - 2px);
         max-height: calc(100% - 2px);
@@ -1034,6 +1269,15 @@ button:disabled {
         width: calc(var(--enemy-panel-width) + var(--tracker-width) + 10px);
     }
 
+    .app.randoMode.showEnemies {
+        min-width: calc(var(--enemy-panel-width) + var(--drop-table-width) + 10px);
+    }
+
+    .app.randoMode.showEnemies .appHeader,
+    .app.randoMode.showEnemies .appFooter {
+        width: calc(var(--enemy-panel-width) + var(--drop-table-width) + 10px);
+    }
+
     .appHeader {
         padding-bottom: 4px;
     }
@@ -1063,6 +1307,10 @@ button:disabled {
 
     .showEnemies .packGroup {
         grid-template-columns: var(--enemy-panel-width) var(--drop-table-width) var(--drop-size);
+    }
+
+    .randoMode.showEnemies .packGroup {
+        grid-template-columns: var(--enemy-panel-width) var(--drop-table-width);
     }
 
     .showEnemies .packGroup > table {
